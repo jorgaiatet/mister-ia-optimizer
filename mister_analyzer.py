@@ -11,6 +11,14 @@ from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
 
+# Candidate models in order of priority (handles free tier & version updates)
+CANDIDATE_MODELS = [
+    'gemini-flash-latest',
+    'gemini-3-flash-preview',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash'
+]
+
 class MisterReport(BaseModel):
     economia: str = Field(description="Análisis del saldo, valor de plantilla, jugadores en subida/bajada y sugerencias de venta.")
     alineacion: str = Field(description="11 ideal en formación óptima, con desglose detallado de riesgos de rotación y titularidades.")
@@ -42,6 +50,22 @@ def get_gemini_client(api_key: str = None) -> genai.Client:
         raise ValueError("Se requiere una API Key de Google Gemini válida.")
     return genai.Client(api_key=key)
 
+def generate_with_fallback(client: genai.Client, contents: List[Any], config: types.GenerateContentConfig = None) -> Any:
+    """Call Gemini API with model fallback list for maximum reliability."""
+    last_exception = None
+    for model_name in CANDIDATE_MODELS:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config
+            )
+            return response
+        except Exception as e:
+            last_exception = e
+            continue
+    raise last_exception or ValueError("No se pudo conectar a ningún modelo de Gemini disponible.")
+
 def upload_file_to_gemini(client: genai.Client, file_bytes: bytes, filename: str) -> Any:
     """Upload a temporary file (video or image) to Gemini Files API."""
     suffix = f"_{filename}"
@@ -72,16 +96,13 @@ def analyze_structured_data(client: genai.Client, squad: List[Dict], market: Lis
     
     prompt = f"{SYSTEM_PROMPT}\n\n{user_context}"
     
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=[prompt],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=MisterReport,
-            temperature=0.2
-        )
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=MisterReport,
+        temperature=0.2
     )
     
+    response = generate_with_fallback(client, [prompt], config)
     return json.loads(response.text)
 
 def analyze_media_files(client: genai.Client, gemini_files: List[Any], user_notes: str = "") -> Dict[str, str]:
@@ -99,36 +120,28 @@ def analyze_media_files(client: genai.Client, gemini_files: List[Any], user_note
     """
     
     contents = gemini_files + [prompt]
-    
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=contents,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=MisterReport,
-            temperature=0.2
-        )
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=MisterReport,
+        temperature=0.2
     )
     
+    response = generate_with_fallback(client, contents, config)
     return json.loads(response.text)
 
 def ask_interactive_chat(client: genai.Client, chat_history: List[types.Content], user_query: str) -> str:
     """
     Send query to interactive chat session with full tactical context history.
     """
-    # Append user query to history
     chat_history.append(
         types.Content(role="user", parts=[types.Part.from_text(text=user_query)])
     )
     
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=chat_history,
-        config=types.GenerateContentConfig(
-            system_instruction="Eres un asesor experto en Mister Fantasy. Respondes con precisión, tono deportivo táctico y formato Markdown."
-        )
+    config = types.GenerateContentConfig(
+        system_instruction="Eres un asesor experto en Mister Fantasy. Respondes con precisión, tono deportivo táctico y formato Markdown."
     )
     
+    response = generate_with_fallback(client, chat_history, config)
     ans_text = response.text
     chat_history.append(
         types.Content(role="model", parts=[types.Part.from_text(text=ans_text)])
