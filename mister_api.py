@@ -26,36 +26,38 @@ HEADERS = {
 
 def authenticate_mister(email_or_token: str, password: str = None) -> dict:
     """
-    Authenticate user via Email/Password or directly validate an X-Auth-Token / X-Auth.
+    Authenticate user via Email/Password or directly validate an X-Auth-Token / PHPSESSID Cookie.
     Returns auth token and user profile data.
     """
     if not email_or_token or not str(email_or_token).strip():
-        return {"success": False, "error": "Por favor introduce un Token de Sesión o Credenciales de Mister Fantasy."}
+        return {"success": False, "error": "Por favor introduce un Token o Cookie de Sesión de Mister Fantasy."}
         
     token_or_email = str(email_or_token).strip()
     clean_pass = str(password).strip() if password else None
 
-    # Token Login
+    # Token / Cookie Login
     if token_or_email and not clean_pass:
         token = token_or_email
+        cookie_header = token if "PHPSESSID" in token or "=" in token else f"PHPSESSID={token}; token={token}; X-Auth={token}"
         headers = {
             **HEADERS,
             "X-Auth-Token": token,
             "X-Auth": token,
-            "Authorization": f"Bearer {token}"
+            "Authorization": f"Bearer {token}",
+            "Cookie": cookie_header
         }
         
         # Try active endpoints
         for base in BASE_URLS:
             try:
-                res = requests.get(f"{base}/users/me", headers=headers, timeout=5)
+                res = requests.get(f"{base}/v2/user/details", headers=headers, timeout=5)
                 if res.status_code == 200 and "json" in res.headers.get("content-type", ""):
                     data = res.json()
                     return {"success": True, "token": token, "user": data, "base_url": base}
             except Exception:
                 continue
                 
-        # Proceed with token if endpoint doesn't require user profile verification
+        # Proceed with session token
         return {"success": True, "token": token, "user": {"name": "Usuario Mister"}, "base_url": BASE_URL}
 
     # Email/Password Login
