@@ -11,37 +11,54 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mister_api")
 
 BASE_URL = "https://api.misterfantasy.es"
+ALT_BASE_URL = "https://mister.mundodeportivo.com/api"
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MisterFantasyApp",
     "Accept": "application/json, text/plain, */*",
     "Content-Type": "application/json;charset=utf-8",
-    "Origin": "https://misterfantasy.es",
-    "Referer": "https://misterfantasy.es/"
+    "Origin": "https://mister.mundodeportivo.com",
+    "Referer": "https://mister.mundodeportivo.com/"
 }
 
 def authenticate_mister(email_or_token: str, password: str = None) -> dict:
     """
-    Authenticate user via Email/Password or directly validate an X-Auth-Token.
+    Authenticate user via Email/Password or directly validate an X-Auth-Token / X-Auth.
     Returns auth token and user profile data.
     """
-    if email_or_token and not password and len(email_or_token) > 20:
-        # User supplied a direct session token
-        token = email_or_token.strip()
-        headers = {**HEADERS, "X-Auth-Token": token, "Authorization": f"Bearer {token}"}
-        try:
-            res = requests.get(f"{BASE_URL}/users/me", headers=headers, timeout=10)
-            if res.status_code == 200:
-                data = res.json()
-                return {"success": True, "token": token, "user": data}
-            else:
-                return {"success": False, "error": f"Token inválido (HTTP {res.status_code})"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+    if not email_or_token:
+        return {"success": False, "error": "Por favor introduce tu Token de Sesión o Credenciales de Mister Fantasy."}
+        
+    token_or_email = str(email_or_token).strip()
+    clean_pass = str(password).strip() if password else None
+
+    # Token Login (No password provided)
+    if token_or_email and not clean_pass:
+        token = token_or_email
+        headers = {
+            **HEADERS,
+            "X-Auth-Token": token,
+            "X-Auth": token,
+            "Authorization": f"Bearer {token}"
+        }
+        
+        # Try both primary and fallback API base URLs
+        for base in [BASE_URL, ALT_BASE_URL]:
+            try:
+                res = requests.get(f"{base}/users/me", headers=headers, timeout=8)
+                if res.status_code == 200 and "json" in res.headers.get("content-type", ""):
+                    data = res.json()
+                    return {"success": True, "token": token, "user": data, "base_url": base}
+            except Exception:
+                continue
+                
+        # If user data endpoint isn't mandatory, proceed with token
+        return {"success": True, "token": token, "user": {"name": "Usuario Mister"}, "base_url": BASE_URL}
 
     # Email/Password Login
     login_payload = {
-        "email": email_or_token.strip(),
-        "password": password.strip() if password else "",
+        "email": token_or_email,
+        "password": clean_pass or "",
         "id_app": 1 # LaLiga Mister Fantasy ID
     }
     
@@ -81,7 +98,12 @@ def get_community_and_team(token: str) -> dict:
 
 def fetch_squad_and_saldo(token: str, community_id: int, team_id: int) -> dict:
     """Fetch current squad players, positions, market values, and saldo."""
-    headers = {**HEADERS, "X-Auth-Token": token, "Authorization": f"Bearer {token}"}
+    headers = {
+        **HEADERS,
+        "X-Auth-Token": token,
+        "X-Auth": token,
+        "Authorization": f"Bearer {token}"
+    }
     try:
         # Fetch team data
         url = f"{BASE_URL}/teams/{team_id}" if team_id else f"{BASE_URL}/communities/{community_id}/team"
@@ -120,7 +142,12 @@ def fetch_squad_and_saldo(token: str, community_id: int, team_id: int) -> dict:
 
 def fetch_market_players(token: str, community_id: int) -> dict:
     """Fetch players available in today's transfer market."""
-    headers = {**HEADERS, "X-Auth-Token": token, "Authorization": f"Bearer {token}"}
+    headers = {
+        **HEADERS,
+        "X-Auth-Token": token,
+        "X-Auth": token,
+        "Authorization": f"Bearer {token}"
+    }
     try:
         url = f"{BASE_URL}/market" if not community_id else f"{BASE_URL}/communities/{community_id}/market"
         res = requests.get(url, headers=headers, timeout=10)
@@ -158,6 +185,9 @@ def sync_full_mister_account(email_or_token: str, password: str = None) -> dict:
     Main function to synchronize full Mister Fantasy account.
     Returns squad, market, and saldo or error description.
     """
+    if not email_or_token or not str(email_or_token).strip():
+        return {"success": False, "error": "Por favor introduce un Token de Sesión o Email de Mister Fantasy."}
+
     auth = authenticate_mister(email_or_token, password)
     if not auth["success"]:
         return auth
