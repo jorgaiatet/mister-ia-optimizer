@@ -5,6 +5,7 @@ Mobile-first fantasy football optimizer using Google Gemini AI & Mister Fantasy 
 
 import os
 import re
+import html
 import streamlit as st
 from dotenv import load_dotenv
 from google.genai import types
@@ -24,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (Official Mister Fantasy Dark Emerald Theme)
+# Custom Styling (Official Mister Fantasy Dark Emerald Theme & Pitch Layout)
 st.markdown("""
 <style>
     /* Main Background & Typography */
@@ -115,26 +116,49 @@ st.markdown("""
         color: #38bdf8;
     }
     
-    /* Tactical Pitch Field */
-    .tactical-pitch {
+    /* Tactical Pitch Field Container */
+    .tactical-pitch-field {
         background: radial-gradient(circle at center, #0e5a2c 0%, #053317 100%);
         border: 2px solid #10b981;
         border-radius: 18px;
         padding: 24px 16px;
         margin-bottom: 24px;
         box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
-        position: relative;
+    }
+    .pitch-zone {
+        margin-bottom: 16px;
+    }
+    .pitch-zone-title {
+        text-align: center;
+        font-weight: 900;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+    .pitch-zone-divider {
+        margin: 16px 0;
+        border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+    .pitch-flex-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
     }
     
-    /* Mister Player Card */
-    .player-card-mister {
+    /* Player Card Styling */
+    .mister-player-card {
         background: rgba(17, 22, 29, 0.95);
         border: 1px solid #30363d;
         border-radius: 10px;
-        padding: 10px 8px;
+        padding: 10px 12px;
         text-align: center;
         box-shadow: 0 4px 12px rgba(0,0,0,0.7);
-        margin: 6px 2px;
+        min-width: 140px;
+        max-width: 170px;
+        flex: 1 1 140px;
     }
     .pos-pill {
         display: inline-block;
@@ -152,7 +176,7 @@ st.markdown("""
     
     .card-name {
         font-weight: 800;
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         color: #ffffff;
         margin: 4px 0 2px 0;
         white-space: nowrap;
@@ -160,7 +184,7 @@ st.markdown("""
         text-overflow: ellipsis;
     }
     .card-meta {
-        font-size: 0.76rem;
+        font-size: 0.78rem;
         color: #9ca3af;
     }
     .badge-titular {
@@ -240,7 +264,7 @@ with st.sidebar:
     
     user_notes = st.text_area(
         "💬 Dudas tácticas o preferencias",
-        placeholder="Ej: Tengo saldo negativo de -8M, ¿a quién vendo para ponerme en positivo antes de la jornada?",
+        placeholder="Ej: Tengo saldo negativo de -8.02M, ¿a quién vendo para ponerme en positivo antes del inicio de la jornada?",
         help="La IA tendrá en cuenta tus dudas al generar la estrategia."
     )
     
@@ -272,7 +296,7 @@ with st.sidebar:
             elif is_token_auth and not mister_token:
                 st.error("⚠️ Introduce tu Cookie/Token de sesión de Mister Fantasy.")
             else:
-                with st.spinner("🔄 Leyendo plantilla real, alineación y saldo desde Mister Fantasy..."):
+                with st.spinner("🔄 Leyendo plantilla real, alineación y saldo (-8.02M €) desde Mister Fantasy..."):
                     credentials = mister_token if is_token_auth else mister_email
                     sync_res = mister_api.sync_full_mister_account(credentials, mister_pass)
                     
@@ -300,7 +324,7 @@ with st.sidebar:
                                 context_text = f"Contexto de la plantilla:\nEconomía: {report['economia']}\nAlineación: {report['alineacion']}\nMercado: {report['mercado']}"
                                 st.session_state.chat_history = [
                                     types.Content(role="user", parts=[types.Part.from_text(text=context_text)]),
-                                    types.Content(role="model", parts=[types.Part.from_text(text="¡Entendido! He analizado tu plantilla real y mercado. ¿Qué dudas tienes?")])
+                                    types.Content(role="model", parts=[types.Part.from_text(text="¡Entendido! He analizado tu plantilla real y tu saldo de -8.02M €. ¿Qué dudas tienes?")])
                                 ]
                                 st.rerun()
                             except Exception as e:
@@ -386,7 +410,7 @@ if st.session_state.current_squad:
         st.markdown(f"""
         <div class="debt-alert-box">
             <h4>🚨 ALERTA DE SALDO NEGATIVO DE MÍSTER FANTASY ({saldo:,.0f} €)</h4>
-            <p><strong>Riesgo inminente:</strong> Tu cuenta tiene una deuda de {abs(saldo):,.0f} €. Si arranca la jornada en saldo negativo, recibirás una penalización de <strong>-44 puntos</strong> (-4 por casilla). Debes ejecutar ventas urgentes inmediatamente para cancelar la deuda.</p>
+            <p><strong>Riesgo inminente de penalización:</strong> Tu cuenta tiene una deuda de {abs(saldo):,.0f} €. Si arranca la jornada en saldo negativo, recibirás una penalización automática de <strong>-44 puntos</strong> (-4 por casilla). Debes ejecutar ventas de plantilla antes del inicio de la jornada para cancelar la deuda.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -423,6 +447,20 @@ if st.session_state.current_squad:
     st.markdown("<br>", unsafe_allow_html=True)
 
 
+def build_player_card_html(p):
+    pos_cls = f"pos-{p.get('position', 'MED').lower()}"
+    badge_cls = "badge-titular" if p.get("status") == "Titular" else "badge-suplente"
+    badge_text = p.get("fitness", "Titular 100%") if p.get("status") == "Titular" else "Suplente"
+    
+    return f"""
+    <div class="mister-player-card">
+        <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
+        <div class="card-name">{p['name']}</div>
+        <div class="card-meta">⭐ {p.get('points', 0)} pts &nbsp;|&nbsp; 💰 {p.get('value', 0)/1e6:.1f} M€</div>
+        <div class="{badge_cls}">{badge_text}</div>
+    </div>
+    """
+
 # Main Report Section Tabs
 if st.session_state.report_data:
     tab_pitch, tab_market, tab_finance, tab_chat = st.tabs([
@@ -439,99 +477,58 @@ if st.session_state.report_data:
         if st.session_state.current_squad:
             squad = st.session_state.current_squad
             
-            # Split starters and substitutes
             starters = [p for p in squad if p.get("status") == "Titular"]
             bench = [p for p in squad if p.get("status") != "Titular"]
+            if not starters:
+                starters = squad[:11]
+                bench = squad[11:]
+                
+            del_s = [p for p in starters if p.get("position") == "DEL"]
+            med_s = [p for p in starters if p.get("position") == "MED"]
+            def_s = [p for p in starters if p.get("position") == "DEF"]
+            por_s = [p for p in starters if p.get("position") == "POR"]
             
-            # Group starters by position
-            por_starters = [p for p in starters if p.get("position") == "POR"]
-            def_starters = [p for p in starters if p.get("position") == "DEF"]
-            med_starters = [p for p in starters if p.get("position") == "MED"]
-            del_starters = [p for p in starters if p.get("position") == "DEL"]
+            del_cards = "".join([build_player_card_html(p) for p in del_s]) or "<div style='color:#9ca3af;'>Sin delanteros</div>"
+            med_cards = "".join([build_player_card_html(p) for p in med_s]) or "<div style='color:#9ca3af;'>Sin centrocampistas</div>"
+            def_cards = "".join([build_player_card_html(p) for p in def_s]) or "<div style='color:#9ca3af;'>Sin defensas</div>"
+            por_cards = "".join([build_player_card_html(p) for p in por_s]) or "<div style='color:#9ca3af;'>Sin portero</div>"
             
-            # Render Pitch Field
-            st.markdown('<div class="tactical-pitch">', unsafe_allow_html=True)
+            # Single Flexbox Field Render
+            pitch_html = f"""
+            <div class="tactical-pitch-field">
+                <div class="pitch-zone">
+                    <div class="pitch-zone-title" style="color:#ef4444;">DELANTEROS TITULARES ({len(del_s)})</div>
+                    <div class="pitch-flex-row">{del_cards}</div>
+                </div>
+                <div class="pitch-zone-divider"></div>
+                <div class="pitch-zone">
+                    <div class="pitch-zone-title" style="color:#10b981;">CENTROCAMPISTAS TITULARES ({len(med_s)})</div>
+                    <div class="pitch-flex-row">{med_cards}</div>
+                </div>
+                <div class="pitch-zone-divider"></div>
+                <div class="pitch-zone">
+                    <div class="pitch-zone-title" style="color:#3b82f6;">DEFENSAS TITULARES ({len(def_s)})</div>
+                    <div class="pitch-flex-row">{def_cards}</div>
+                </div>
+                <div class="pitch-zone-divider"></div>
+                <div class="pitch-zone">
+                    <div class="pitch-zone-title" style="color:#f59e0b;">PORTERO TITULAR ({len(por_s)})</div>
+                    <div class="pitch-flex-row">{por_cards}</div>
+                </div>
+            </div>
+            """
+            st.markdown(pitch_html, unsafe_allow_html=True)
             
-            # Delanteros Line
-            st.markdown("<h6 style='text-align:center; color:#ef4444; margin:0 0 8px 0; font-weight:800;'>DELANTEROS TITULARES</h6>", unsafe_allow_html=True)
-            c_del = st.columns(max(len(del_starters), 1))
-            for i, p in enumerate(del_starters):
-                with c_del[i % len(c_del)]:
-                    st.markdown(f"""
-                    <div class="player-card-mister">
-                        <span class="pos-pill pos-del">DEL</span>
-                        <div class="card-name">{p['name']}</div>
-                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-            st.markdown("<div style='margin:16px 0; border-top:1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
-            
-            # Centrocampistas Line
-            st.markdown("<h6 style='text-align:center; color:#10b981; margin:0 0 8px 0; font-weight:800;'>CENTROCAMPISTAS TITULARES</h6>", unsafe_allow_html=True)
-            c_med = st.columns(max(len(med_starters), 1))
-            for i, p in enumerate(med_starters):
-                with c_med[i % len(c_med)]:
-                    st.markdown(f"""
-                    <div class="player-card-mister">
-                        <span class="pos-pill pos-med">MED</span>
-                        <div class="card-name">{p['name']}</div>
-                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-            st.markdown("<div style='margin:16px 0; border-top:1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
-            
-            # Defensas Line
-            st.markdown("<h6 style='text-align:center; color:#3b82f6; margin:0 0 8px 0; font-weight:800;'>DEFENSAS TITULARES</h6>", unsafe_allow_html=True)
-            c_def = st.columns(max(len(def_starters), 1))
-            for i, p in enumerate(def_starters):
-                with c_def[i % len(c_def)]:
-                    st.markdown(f"""
-                    <div class="player-card-mister">
-                        <span class="pos-pill pos-def">DEF</span>
-                        <div class="card-name">{p['name']}</div>
-                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-            st.markdown("<div style='margin:16px 0; border-top:1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
-            
-            # Portero Line
-            st.markdown("<h6 style='text-align:center; color:#f59e0b; margin:0 0 8px 0; font-weight:800;'>PORTERO TITULAR</h6>", unsafe_allow_html=True)
-            c_por = st.columns(max(len(por_starters), 1))
-            for i, p in enumerate(por_starters):
-                with c_por[i % len(c_por)]:
-                    st.markdown(f"""
-                    <div class="player-card-mister">
-                        <span class="pos-pill pos-por">POR</span>
-                        <div class="card-name">{p['name']}</div>
-                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Bench Section
+            # Bench Render
             if bench:
-                st.markdown("#### 🔄 Banquillo / Suplentes de tu Plantilla:")
-                b_cols = st.columns(min(len(bench), 4))
-                for i, p in enumerate(bench):
-                    with b_cols[i % 4]:
-                        pos_cls = f"pos-{p.get('position', 'MED').lower()}"
-                        st.markdown(f"""
-                        <div class="player-card-mister">
-                            <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
-                            <div class="card-name">{p['name']}</div>
-                            <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                            <div class="badge-suplente">Suplente</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                st.markdown("<br>", unsafe_allow_html=True)
+                bench_cards = "".join([build_player_card_html(p) for p in bench])
+                bench_html = f"""
+                <h4>🔄 Banquillo / Suplentes de tu Plantilla:</h4>
+                <div class="pitch-flex-row" style="justify-content:flex-start; margin-bottom:20px;">
+                    {bench_cards}
+                </div>
+                """
+                st.markdown(bench_html, unsafe_allow_html=True)
                 
         st.markdown(st.session_state.report_data.get("alineacion", ""))
         
@@ -541,26 +538,20 @@ if st.session_state.report_data:
         
         if st.session_state.current_market:
             m_list = st.session_state.current_market
-            st.markdown("#### 🎯 Oportunidades del Mercado de Hoy:")
-            m_cols = st.columns(min(len(m_list), 4))
-            for i, p in enumerate(m_list[:8]):
-                with m_cols[i % 4]:
-                    pos_cls = f"pos-{p.get('position', 'MED').lower()}"
-                    st.markdown(f"""
-                    <div class="player-card-mister">
-                        <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
-                        <div class="card-name">{p['name']}</div>
-                        <div class="card-meta">💰 {p.get('value', 0)/1e6:.1f} M€ | ⭐ {p.get('points', 0)} pts</div>
-                        <div class="badge-titular">📈 Revalorización al alza</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
+            market_cards = "".join([build_player_card_html(p) for p in m_list[:8]])
+            market_html = f"""
+            <h4>🎯 Oportunidades del Mercado de Hoy:</h4>
+            <div class="pitch-flex-row" style="justify-content:flex-start; margin-bottom:20px;">
+                {market_cards}
+            </div>
+            """
+            st.markdown(market_html, unsafe_allow_html=True)
             
         st.markdown(st.session_state.report_data.get("mercado", ""))
         
     # TAB 3: Diagnóstico Financiero
     with tab_finance:
-        st.subheader("📊 Diagnóstico Económico & Estrategia de Liquidez")
+        st.subheader("📊 Diagnóstico Económico & Cancelación de Deuda (-8.02M €)")
         st.markdown(st.session_state.report_data.get("economia", ""))
         
     # TAB 4: Consultor Míster Interactivo
@@ -575,7 +566,7 @@ if st.session_state.report_data:
             with st.chat_message(role):
                 st.markdown(msg.parts[0].text)
                 
-        if user_query := st.chat_input("Ej: Tengo -8M de deuda, ¿a quién debo vender antes del inicio de la jornada?"):
+        if user_query := st.chat_input("Ej: Tengo -8.02M de deuda, ¿a quién debo vender antes del inicio de la jornada?"):
             with st.chat_message("user"):
                 st.markdown(user_query)
                 
