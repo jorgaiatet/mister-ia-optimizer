@@ -108,8 +108,14 @@ with st.sidebar:
     st.title("⚽ Mister IA Pro")
     st.caption("Optimización Táctica y Financiera con IA")
     
-    # API Key Input
+    # API Key Input (Check env var, st.secrets, or .env)
     default_key = os.environ.get("GEMINI_API_KEY", "")
+    try:
+        if not default_key and hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+            default_key = st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        pass
+
     api_key = st.text_input(
         "🔑 Gemini API Key",
         value=default_key,
@@ -138,33 +144,46 @@ with st.sidebar:
     # Mode 1: Auto-Sync API
     if mode == "🔄 Auto-Sincronización Mister API":
         st.subheader("1. Conexión a Mister Fantasy")
-        auth_type = st.selectbox("Método de autenticación:", ["Email y Contraseña", "Token de Sesión (X-Auth-Token)"])
+        auth_type = st.selectbox("Método de autenticación:", ["Token de Sesión (X-Auth-Token)", "Email y Contraseña"])
         
-        if auth_type == "Email y Contraseña":
-            mister_email = st.text_input("Email de Mister Fantasy:")
+        # Restore saved token from database if present
+        import database
+        saved_token = database.get_setting("mister_token", "")
+        
+        is_token_auth = "Token" in str(auth_type)
+        
+        if is_token_auth:
+            mister_token = st.text_input("X-Auth-Token de Mister:", value=saved_token, type="password", help="Tu token quedará guardado para no tener que volver a escribirlo.")
+            mister_email, mister_pass = None, None
+        else:
+            saved_email = database.get_setting("mister_email", "")
+            mister_email = st.text_input("Email de Mister Fantasy:", value=saved_email)
             mister_pass = st.text_input("Contraseña:", type="password")
             mister_token = None
-        else:
-            mister_token = st.text_input("X-Auth-Token de Mister:", type="password")
-            mister_email, mister_pass = None, None
             
         analyze_btn = st.button("🚀 Sincronizar y Analizar", type="primary", use_container_width=True)
         
         if analyze_btn:
             if not api_key:
                 st.error("⚠️ Introduce tu API Key de Gemini.")
-            elif auth_type == "Email y Contraseña" and (not mister_email or not mister_pass):
+            elif not is_token_auth and (not mister_email or not mister_pass):
                 st.error("⚠️ Introduce tu email y contraseña de Mister Fantasy.")
-            elif auth_type == "Token de Sesión" and not mister_token:
+            elif is_token_auth and not mister_token:
                 st.error("⚠️ Introduce tu Token de sesión de Mister Fantasy.")
             else:
                 with st.spinner("🔄 Conectando a Mister Fantasy y extrayendo datos de tu cuenta..."):
-                    credentials = mister_token if auth_type == "Token de Sesión" else mister_email
+                    credentials = mister_token if is_token_auth else mister_email
                     sync_res = mister_api.sync_full_mister_account(credentials, mister_pass)
                     
                     if not sync_res["success"]:
                         st.error(f"❌ Error en sincronización: {sync_res.get('error')}")
                     else:
+                        # Save token or credentials permanently to SQLite database
+                        if mister_token:
+                            database.set_setting("mister_token", mister_token)
+                        if mister_email:
+                            database.set_setting("mister_email", mister_email)
+                            
                         st.session_state.current_squad = sync_res["squad"]
                         st.session_state.current_market = sync_res["market"]
                         st.session_state.current_saldo = sync_res["saldo"]
