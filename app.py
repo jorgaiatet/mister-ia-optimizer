@@ -24,81 +24,123 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (Mister Fantasy Dark Emerald Sports Theme)
+# Custom Styling (Official Mister Fantasy Dark Emerald Theme)
 st.markdown("""
 <style>
-    /* Main Background & Text */
+    /* Main Background & Typography */
     .stApp {
-        background-color: #0b0e14;
-        color: #e6edf3;
+        background-color: #080c10;
+        color: #f0f6fc;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    /* Card Container Styling */
-    .metric-card {
-        background: linear-gradient(135deg, #161b22 0%, #1c2128 100%);
-        border: 1px solid #30363d;
+    /* Mister Header Bar */
+    .mister-header {
+        background: linear-gradient(90deg, #032b13 0%, #055024 50%, #059669 100%);
+        border-bottom: 2px solid #10b981;
+        padding: 16px 24px;
         border-radius: 12px;
-        padding: 16px;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        margin-bottom: 20px;
+        box-shadow: 0 4px 16px rgba(5, 150, 105, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
-    .metric-card h3 {
+    .mister-header h1 {
+        color: #ffffff;
         margin: 0;
-        font-size: 0.85rem;
+        font-size: 1.8rem;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+    }
+    .mister-header p {
+        color: #a7f3d0;
+        margin: 2px 0 0 0;
+        font-size: 0.9rem;
+    }
+    
+    /* Debt Alert Box */
+    .debt-alert-box {
+        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+        border: 2px solid #ef4444;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+    }
+    .debt-alert-box h4 {
+        margin: 0 0 6px 0;
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+    .debt-alert-box p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #fca5a5;
+    }
+    
+    /* Top Metrics Cards */
+    .mister-metric-card {
+        background: #11161d;
+        border: 1px solid #21262d;
+        border-radius: 12px;
+        padding: 14px;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+    .mister-metric-card h3 {
+        margin: 0;
+        font-size: 0.8rem;
         color: #8b949e;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .metric-card p {
-        margin: 8px 0 0 0;
+    .mister-metric-card .val-positive {
+        margin: 6px 0 0 0;
         font-size: 1.5rem;
         font-weight: 800;
         color: #10b981;
     }
-    
-    /* Header Accent Banner */
-    .header-banner {
-        background: linear-gradient(90deg, #059669 0%, #10b981 100%);
-        padding: 20px 28px;
-        border-radius: 14px;
-        margin-bottom: 24px;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
+    .mister-metric-card .val-negative {
+        margin: 6px 0 0 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #ef4444;
     }
-    .header-banner h1 {
-        color: #ffffff;
-        margin: 0;
-        font-size: 1.9rem;
-        font-weight: 900;
-        letter-spacing: -0.5px;
+    .mister-metric-card .val-info {
+        margin: 6px 0 0 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #38bdf8;
     }
     
-    /* Tactical Football Pitch Container */
-    .pitch-field {
-        background: radial-gradient(circle, #0e5a2c 0%, #053317 100%);
+    /* Tactical Pitch Field */
+    .tactical-pitch {
+        background: radial-gradient(circle at center, #0e5a2c 0%, #053317 100%);
         border: 2px solid #10b981;
-        border-radius: 16px;
+        border-radius: 18px;
         padding: 24px 16px;
-        position: relative;
         margin-bottom: 24px;
-        box-shadow: inset 0 0 50px rgba(0,0,0,0.7);
+        box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+        position: relative;
     }
     
-    /* Player Card on Pitch */
-    .mister-player-card {
-        background: rgba(22, 27, 34, 0.95);
+    /* Mister Player Card */
+    .player-card-mister {
+        background: rgba(17, 22, 29, 0.95);
         border: 1px solid #30363d;
         border-radius: 10px;
         padding: 10px 8px;
         text-align: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-        margin: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+        margin: 6px 2px;
     }
     .pos-pill {
         display: inline-block;
         padding: 2px 8px;
         border-radius: 10px;
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         font-weight: 800;
         text-transform: uppercase;
         color: #fff;
@@ -108,14 +150,17 @@ st.markdown("""
     .pos-med { background: #059669; }
     .pos-del { background: #dc2626; }
     
-    .mister-player-name {
+    .card-name {
         font-weight: 800;
         font-size: 0.88rem;
         color: #ffffff;
         margin: 4px 0 2px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    .mister-player-meta {
-        font-size: 0.75rem;
+    .card-meta {
+        font-size: 0.76rem;
         color: #9ca3af;
     }
     .badge-titular {
@@ -123,35 +168,35 @@ st.markdown("""
         color: #10b981;
         border: 1px solid #10b981;
         border-radius: 6px;
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         padding: 2px 6px;
         margin-top: 4px;
         display: inline-block;
         font-weight: 700;
     }
-    .badge-riesgo {
+    .badge-suplente {
         background: rgba(245, 158, 11, 0.2);
         color: #f59e0b;
         border: 1px solid #f59e0b;
         border-radius: 6px;
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         padding: 2px 6px;
         margin-top: 4px;
         display: inline-block;
         font-weight: 700;
     }
     
-    /* Tab Navigation Styling */
+    /* Tab Navigation */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
     .stTabs [data-baseweb="tab"] {
         border-radius: 8px;
         padding: 12px 20px;
-        background-color: #161b22;
-        border: 1px solid #30363d;
+        background-color: #11161d;
+        border: 1px solid #21262d;
         color: #c9d1d9;
-        font-weight: 600;
+        font-weight: 700;
     }
     .stTabs [aria-selected="true"] {
         background-color: #059669 !important;
@@ -171,21 +216,19 @@ if "current_squad" not in st.session_state:
 if "current_market" not in st.session_state:
     st.session_state.current_market = []
 if "current_saldo" not in st.session_state:
-    st.session_state.current_saldo = 14500000
+    st.session_state.current_saldo = -8021680
 
-# Sidebar Configuration
+# Sidebar Setup
 with st.sidebar:
     st.image("https://cdn-mister.mundodeportivo.com/file/cdn-common/logos/mister-md.png", width=180, use_container_width=False)
     st.title("⚽ Mister IA Pro")
-    st.caption("Optimización Táctica y Financiera para Mister Fantasy")
+    st.caption("Asistente Táctico & Financiero Mister Fantasy")
     
-    # Gemini API Key configuration
     api_key_env = os.environ.get("GEMINI_API_KEY", "")
     api_key = st.text_input("🔑 Gemini API Key", value=api_key_env, type="password", help="Tu API Key de Google Gemini AI Studio.")
     
     st.divider()
     
-    # Analysis Mode Selector
     st.subheader("⚙️ Modo de Análisis")
     mode = st.radio(
         "Elige cómo obtener tus datos:",
@@ -196,15 +239,14 @@ with st.sidebar:
     st.divider()
     
     user_notes = st.text_area(
-        "💬 Dudas o consideraciones tácticas",
-        placeholder="Ej: Tengo dudas entre poner a Olmo o Sancet en el 11, o si debo pujar fuerte por Vinícius...",
-        help="La IA tendrá en cuenta tus preferencias al generar la estrategia."
+        "💬 Dudas tácticas o preferencias",
+        placeholder="Ej: Tengo saldo negativo de -8M, ¿a quién vendo para ponerme en positivo antes de la jornada?",
+        help="La IA tendrá en cuenta tus dudas al generar la estrategia."
     )
     
-    # Mode 1: Auto-Sync API
     if mode == "🔄 Auto-Sincronización Mister API":
         st.subheader("1. Conexión a Mister Fantasy")
-        auth_type = st.selectbox("Método de autenticación:", ["Token o Cookie de Sesión (PHPSESSID)", "Email y Contraseña"])
+        auth_type = st.selectbox("Método de autenticación:", ["Cookie / Token (PHPSESSID)", "Email y Contraseña"])
         
         import database
         saved_token = database.get_setting("mister_token", "f3b48c91205f19bf35bcf23bc566e941")
@@ -212,7 +254,7 @@ with st.sidebar:
         is_token_auth = "Token" in str(auth_type) or "PHPSESSID" in str(auth_type)
         
         if is_token_auth:
-            mister_token = st.text_input("Cookie / Token de Sesión:", value=saved_token, type="password", help="Tu clave de sesión quedará guardada para vincular la app automáticamente.")
+            mister_token = st.text_input("Cookie / Token de Sesión:", value=saved_token, type="password", help="Tu clave de sesión de Mister Fantasy.")
             mister_email, mister_pass = None, None
         else:
             saved_email = database.get_setting("mister_email", "")
@@ -220,14 +262,6 @@ with st.sidebar:
             mister_pass = st.text_input("Contraseña:", type="password")
             mister_token = None
             
-        saved_squad_text = database.get_setting("custom_squad_text", "")
-        custom_squad_text = st.text_area(
-            "📝 Ajuste Manual de Jugadores (Opcional):",
-            value=saved_squad_text,
-            placeholder="Ej: D. Olmo, O. Sancet, M. Casadó, M. Cucurella, F. García, P. Ciss...",
-            help="Puedes modificar o añadir nombres de tu plantilla aquí."
-        )
-        
         analyze_btn = st.button("🚀 Sincronizar y Analizar", type="primary", use_container_width=True)
         
         if analyze_btn:
@@ -238,7 +272,7 @@ with st.sidebar:
             elif is_token_auth and not mister_token:
                 st.error("⚠️ Introduce tu Cookie/Token de sesión de Mister Fantasy.")
             else:
-                with st.spinner("🔄 Conectando a Mister Fantasy y extrayendo datos de tu cuenta..."):
+                with st.spinner("🔄 Leyendo plantilla real, alineación y saldo desde Mister Fantasy..."):
                     credentials = mister_token if is_token_auth else mister_email
                     sync_res = mister_api.sync_full_mister_account(credentials, mister_pass)
                     
@@ -255,7 +289,7 @@ with st.sidebar:
                         st.session_state.current_saldo = sync_res["saldo"]
                         st.success(f"✅ Sincronizado correctamente ({sync_res.get('community_name', 'Mister')})")
                         
-                        with st.spinner("🧠 Analizando estrategia táctica con Gemini AI..."):
+                        with st.spinner("🧠 Analizando estrategia táctica y plan de ventas con Gemini AI..."):
                             try:
                                 client = mister_analyzer.get_gemini_client(api_key)
                                 report = mister_analyzer.analyze_structured_data(
@@ -266,13 +300,12 @@ with st.sidebar:
                                 context_text = f"Contexto de la plantilla:\nEconomía: {report['economia']}\nAlineación: {report['alineacion']}\nMercado: {report['mercado']}"
                                 st.session_state.chat_history = [
                                     types.Content(role="user", parts=[types.Part.from_text(text=context_text)]),
-                                    types.Content(role="model", parts=[types.Part.from_text(text="¡Entendido! He analizado tu plantilla y mercado. ¿Qué dudas tienes?")])
+                                    types.Content(role="model", parts=[types.Part.from_text(text="¡Entendido! He analizado tu plantilla real y mercado. ¿Qué dudas tienes?")])
                                 ]
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error de análisis IA: {str(e)}")
 
-    # Mode 2: Media Upload
     elif mode == "📹 Subir Vídeo / Fotos (Visión IA)":
         st.subheader("1. Tu Plantilla y Mercado")
         media_files = st.file_uploader(
@@ -311,10 +344,9 @@ with st.sidebar:
                 except Exception as e:
                     st.error(f"Error de procesamiento: {str(e)}")
 
-    # Mode 3: Demo Mode
     else:
         st.subheader("1. Datos de Demostración")
-        st.info("Carga plantilla y mercado de prueba realistas de LaLiga.")
+        st.info("Carga plantilla y mercado de prueba realistas.")
         
         analyze_btn = st.button("🚀 Cargar Informe Demo", type="primary", use_container_width=True)
         
@@ -332,50 +364,60 @@ with st.sidebar:
             st.rerun()
 
 
-# Main Application Interface
+# Header Banner
 st.markdown("""
-<div class="header-banner">
+<div class="mister-header">
     <div>
         <h1>⚽ Mister IA Optimizer Pro</h1>
-        <p style="margin:4px 0 0 0; color:#e2e8f0; font-size:0.95rem;">Asistente Táctico & Financiero Inteligente para Mister Fantasy (Mundo Deportivo)</p>
+        <p>Optimizador Táctico & Financiero Inteligente para Mister Fantasy (Mundo Deportivo)</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Top Metrics Banner if squad data is loaded
+# Top Metrics & Negative Balance Alert Banner
 if st.session_state.current_squad:
     squad = st.session_state.current_squad
     saldo = st.session_state.current_saldo
     total_val = sum(p.get("value", 0) for p in squad)
     total_pts = sum(p.get("points", 0) for p in squad)
     
+    # Debt Alert Banner if Saldo < 0
+    if saldo < 0:
+        st.markdown(f"""
+        <div class="debt-alert-box">
+            <h4>🚨 ALERTA DE SALDO NEGATIVO DE MÍSTER FANTASY ({saldo:,.0f} €)</h4>
+            <p><strong>Riesgo inminente:</strong> Tu cuenta tiene una deuda de {abs(saldo):,.0f} €. Si arranca la jornada en saldo negativo, recibirás una penalización de <strong>-44 puntos</strong> (-4 por casilla). Debes ejecutar ventas urgentes inmediatamente para cancelar la deuda.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
     col1, col2, col3, col4 = st.columns(4)
     with col1:
+        val_cls = "val-negative" if saldo < 0 else "val-positive"
         st.markdown(f"""
-        <div class="metric-card">
-            <h3>💰 Saldo Líquido</h3>
-            <p>{saldo:,.0f} €</p>
+        <div class="mister-metric-card">
+            <h3>💰 Saldo Actual</h3>
+            <p class="{val_cls}">{saldo:,.0f} €</p>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="mister-metric-card">
             <h3>🛡️ Valor de Plantilla</h3>
-            <p style="color:#38bdf8;">{total_val:,.0f} €</p>
+            <p class="val-info">{total_val:,.0f} €</p>
         </div>
         """, unsafe_allow_html=True)
     with col3:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="mister-metric-card">
             <h3>👥 Futbolistas</h3>
-            <p style="color:#a78bfa;">{len(squad)} Jugadores</p>
+            <p style="color:#a78bfa; margin:6px 0 0 0; font-size:1.5rem; font-weight:800;">{len(squad)} Jugadores</p>
         </div>
         """, unsafe_allow_html=True)
     with col4:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="mister-metric-card">
             <h3>⭐ Puntos Totales</h3>
-            <p style="color:#f59e0b;">{total_pts} Pts</p>
+            <p style="color:#f59e0b; margin:6px 0 0 0; font-size:1.5rem; font-weight:800;">{total_pts} Pts</p>
         </div>
         """, unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
@@ -385,113 +427,130 @@ if st.session_state.current_squad:
 if st.session_state.report_data:
     tab_pitch, tab_market, tab_finance, tab_chat = st.tabs([
         "⚽ Campo Táctico & 11 Ideal",
-        "📈 Mercado & Especulación (Chollos)",
-        "📊 Diagnóstico Financiero",
+        "📈 Mercado & Plan de Especulación",
+        "📊 Diagnóstico Financiero & Deuda",
         "💬 Consultor Míster Interactivo"
     ])
     
     # TAB 1: Campo Táctico & 11 Ideal
     with tab_pitch:
-        st.subheader("👕 Alineación Ideal & Riesgo de Rotaciones (Formación 4-3-3 / 3-4-3)")
+        st.subheader("👕 Alineación Ideal & Terreno de Juego Táctico")
         
         if st.session_state.current_squad:
             squad = st.session_state.current_squad
             
-            # Group squad by position
-            por_list = [p for p in squad if p.get("position") == "POR"]
-            def_list = [p for p in squad if p.get("position") == "DEF"]
-            med_list = [p for p in squad if p.get("position") == "MED"]
-            del_list = [p for p in squad if p.get("position") == "DEL"]
+            # Split starters and substitutes
+            starters = [p for p in squad if p.get("status") == "Titular"]
+            bench = [p for p in squad if p.get("status") != "Titular"]
             
-            # Tactical Field Render
-            st.markdown('<div class="pitch-field">', unsafe_allow_html=True)
+            # Group starters by position
+            por_starters = [p for p in starters if p.get("position") == "POR"]
+            def_starters = [p for p in starters if p.get("position") == "DEF"]
+            med_starters = [p for p in starters if p.get("position") == "MED"]
+            del_starters = [p for p in starters if p.get("position") == "DEL"]
             
-            # 1. Delanteros Line
-            st.markdown("<h5 style='text-align:center; color:#ef4444; margin-bottom:8px;'>DELANTEROS</h5>", unsafe_allow_html=True)
-            cols_del = st.columns(max(len(del_list), 1))
-            for i, p in enumerate(del_list):
-                with cols_del[i % len(cols_del)]:
-                    badge_cls = "badge-titular" if p.get("points", 0) > 40 else "badge-riesgo"
+            # Render Pitch Field
+            st.markdown('<div class="tactical-pitch">', unsafe_allow_html=True)
+            
+            # Delanteros Line
+            st.markdown("<h6 style='text-align:center; color:#ef4444; margin:0 0 8px 0; font-weight:800;'>DELANTEROS TITULARES</h6>", unsafe_allow_html=True)
+            c_del = st.columns(max(len(del_starters), 1))
+            for i, p in enumerate(del_starters):
+                with c_del[i % len(c_del)]:
                     st.markdown(f"""
-                    <div class="mister-player-card">
+                    <div class="player-card-mister">
                         <span class="pos-pill pos-del">DEL</span>
-                        <div class="mister-player-name">{p['name']}</div>
-                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                        <div class="card-name">{p['name']}</div>
+                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-            st.markdown("<div style='margin: 16px 0; border-top: 1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin:16px 0; border-top:1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
             
-            # 2. Centrocampistas Line
-            st.markdown("<h5 style='text-align:center; color:#10b981; margin-bottom:8px;'>CENTROCAMPISTAS</h5>", unsafe_allow_html=True)
-            cols_med = st.columns(max(len(med_list), 1))
-            for i, p in enumerate(med_list):
-                with cols_med[i % len(cols_med)]:
-                    badge_cls = "badge-titular" if p.get("points", 0) > 40 else "badge-riesgo"
+            # Centrocampistas Line
+            st.markdown("<h6 style='text-align:center; color:#10b981; margin:0 0 8px 0; font-weight:800;'>CENTROCAMPISTAS TITULARES</h6>", unsafe_allow_html=True)
+            c_med = st.columns(max(len(med_starters), 1))
+            for i, p in enumerate(med_starters):
+                with c_med[i % len(c_med)]:
                     st.markdown(f"""
-                    <div class="mister-player-card">
+                    <div class="player-card-mister">
                         <span class="pos-pill pos-med">MED</span>
-                        <div class="mister-player-name">{p['name']}</div>
-                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                        <div class="card-name">{p['name']}</div>
+                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-            st.markdown("<div style='margin: 16px 0; border-top: 1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin:16px 0; border-top:1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
             
-            # 3. Defensas Line
-            st.markdown("<h5 style='text-align:center; color:#3b82f6; margin-bottom:8px;'>DEFENSAS</h5>", unsafe_allow_html=True)
-            cols_def = st.columns(max(len(def_list), 1))
-            for i, p in enumerate(def_list):
-                with cols_def[i % len(cols_def)]:
-                    badge_cls = "badge-titular" if p.get("points", 0) > 40 else "badge-riesgo"
+            # Defensas Line
+            st.markdown("<h6 style='text-align:center; color:#3b82f6; margin:0 0 8px 0; font-weight:800;'>DEFENSAS TITULARES</h6>", unsafe_allow_html=True)
+            c_def = st.columns(max(len(def_starters), 1))
+            for i, p in enumerate(def_starters):
+                with c_def[i % len(c_def)]:
                     st.markdown(f"""
-                    <div class="mister-player-card">
+                    <div class="player-card-mister">
                         <span class="pos-pill pos-def">DEF</span>
-                        <div class="mister-player-name">{p['name']}</div>
-                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                        <div class="card-name">{p['name']}</div>
+                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-            st.markdown("<div style='margin: 16px 0; border-top: 1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin:16px 0; border-top:1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
             
-            # 4. Porteros Line
-            st.markdown("<h5 style='text-align:center; color:#f59e0b; margin-bottom:8px;'>PORTERO</h5>", unsafe_allow_html=True)
-            cols_por = st.columns(max(len(por_list), 1))
-            for i, p in enumerate(por_list):
-                with cols_por[i % len(cols_por)]:
-                    badge_cls = "badge-titular" if p.get("points", 0) > 30 else "badge-riesgo"
+            # Portero Line
+            st.markdown("<h6 style='text-align:center; color:#f59e0b; margin:0 0 8px 0; font-weight:800;'>PORTERO TITULAR</h6>", unsafe_allow_html=True)
+            c_por = st.columns(max(len(por_starters), 1))
+            for i, p in enumerate(por_starters):
+                with c_por[i % len(c_por)]:
                     st.markdown(f"""
-                    <div class="mister-player-card">
+                    <div class="player-card-mister">
                         <span class="pos-pill pos-por">POR</span>
-                        <div class="mister-player-name">{p['name']}</div>
-                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
-                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                        <div class="card-name">{p['name']}</div>
+                        <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="badge-titular">{p.get('fitness', 'Titular 100%')}</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
             st.markdown('</div>', unsafe_allow_html=True)
             
+            # Bench Section
+            if bench:
+                st.markdown("#### 🔄 Banquillo / Suplentes de tu Plantilla:")
+                b_cols = st.columns(min(len(bench), 4))
+                for i, p in enumerate(bench):
+                    with b_cols[i % 4]:
+                        pos_cls = f"pos-{p.get('position', 'MED').lower()}"
+                        st.markdown(f"""
+                        <div class="player-card-mister">
+                            <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
+                            <div class="card-name">{p['name']}</div>
+                            <div class="card-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                            <div class="badge-suplente">Suplente</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
+                
         st.markdown(st.session_state.report_data.get("alineacion", ""))
         
-    # TAB 2: Mercado & Especulación (Chollos)
+    # TAB 2: Mercado & Plan de Especulación
     with tab_market:
-        st.subheader("🛒 Mercado de Fichajes & Estrategia de Especulación")
+        st.subheader("🛒 Mercado de Fichajes & Plan de Cancelación de Deuda")
         
         if st.session_state.current_market:
             m_list = st.session_state.current_market
-            st.markdown("#### 🎯 Oportunidades Destacadas del Mercado de Hoy:")
+            st.markdown("#### 🎯 Oportunidades del Mercado de Hoy:")
             m_cols = st.columns(min(len(m_list), 4))
             for i, p in enumerate(m_list[:8]):
                 with m_cols[i % 4]:
                     pos_cls = f"pos-{p.get('position', 'MED').lower()}"
                     st.markdown(f"""
-                    <div class="mister-player-card">
+                    <div class="player-card-mister">
                         <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
-                        <div class="mister-player-name">{p['name']}</div>
-                        <div class="mister-player-meta">💰 {p.get('value', 0)/1e6:.1f} M€ | ⭐ {p.get('points', 0)} pts</div>
+                        <div class="card-name">{p['name']}</div>
+                        <div class="card-meta">💰 {p.get('value', 0)/1e6:.1f} M€ | ⭐ {p.get('points', 0)} pts</div>
                         <div class="badge-titular">📈 Revalorización al alza</div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -501,13 +560,13 @@ if st.session_state.report_data:
         
     # TAB 3: Diagnóstico Financiero
     with tab_finance:
-        st.subheader("📊 Diagnóstico Económico del Patrimonio")
+        st.subheader("📊 Diagnóstico Económico & Estrategia de Liquidez")
         st.markdown(st.session_state.report_data.get("economia", ""))
         
     # TAB 4: Consultor Míster Interactivo
     with tab_chat:
         st.subheader("💬 Consultor Míster Interactivo")
-        st.caption("Pregúntale cualquier duda sobre tu 11, parches de última hora, ofertas de rivales o pujas máximas.")
+        st.caption("Pregúntale cualquier duda sobre tu 11, ventas necesarias para salir de deudas o pujas del mercado.")
         
         for i, msg in enumerate(st.session_state.chat_history):
             if i < 2:
@@ -516,12 +575,12 @@ if st.session_state.report_data:
             with st.chat_message(role):
                 st.markdown(msg.parts[0].text)
                 
-        if user_query := st.chat_input("Ej: Tengo 14.5M, ¿debo pujar por Vinícius o asegurar a Budimir?"):
+        if user_query := st.chat_input("Ej: Tengo -8M de deuda, ¿a quién debo vender antes del inicio de la jornada?"):
             with st.chat_message("user"):
                 st.markdown(user_query)
                 
             with st.chat_message("assistant"):
-                with st.spinner("Pensando respuesta táctica con Gemini AI..."):
+                with st.spinner("Analizando plan de liquidez con Gemini AI..."):
                     try:
                         client = mister_analyzer.get_gemini_client(api_key)
                         ans = mister_analyzer.ask_interactive_chat(
