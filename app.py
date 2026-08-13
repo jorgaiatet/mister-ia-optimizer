@@ -4,6 +4,7 @@ Mobile-first fantasy football optimizer using Google Gemini AI & Mister Fantasy 
 """
 
 import os
+import re
 import streamlit as st
 from dotenv import load_dotenv
 from google.genai import types
@@ -23,70 +24,139 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (Dark Emerald Sports Aesthetic & Mobile Responsive)
+# Custom Styling (Mister Fantasy Dark Emerald Sports Theme)
 st.markdown("""
 <style>
     /* Main Background & Text */
     .stApp {
-        background-color: #0d1117;
+        background-color: #0b0e14;
         color: #e6edf3;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
     /* Card Container Styling */
     .metric-card {
-        background: linear-gradient(135deg, #161b22 0%, #21262d 100%);
+        background: linear-gradient(135deg, #161b22 0%, #1c2128 100%);
         border: 1px solid #30363d;
         border-radius: 12px;
         padding: 16px;
         text-align: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
     .metric-card h3 {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: #8b949e;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     .metric-card p {
         margin: 8px 0 0 0;
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #2ea043;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #10b981;
     }
     
-    /* Header Accent */
+    /* Header Accent Banner */
     .header-banner {
-        background: linear-gradient(90deg, #1f6feb 0%, #238636 100%);
-        padding: 18px 24px;
-        border-radius: 12px;
+        background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+        padding: 20px 28px;
+        border-radius: 14px;
         margin-bottom: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
     }
     .header-banner h1 {
         color: #ffffff;
         margin: 0;
-        font-size: 1.8rem;
-        font-weight: 800;
+        font-size: 1.9rem;
+        font-weight: 900;
+        letter-spacing: -0.5px;
     }
     
-    /* Tab Styling */
+    /* Tactical Football Pitch Container */
+    .pitch-field {
+        background: radial-gradient(circle, #0e5a2c 0%, #053317 100%);
+        border: 2px solid #10b981;
+        border-radius: 16px;
+        padding: 24px 16px;
+        position: relative;
+        margin-bottom: 24px;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.7);
+    }
+    
+    /* Player Card on Pitch */
+    .mister-player-card {
+        background: rgba(22, 27, 34, 0.95);
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 10px 8px;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+        margin: 6px;
+    }
+    .pos-pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #fff;
+    }
+    .pos-por { background: #d97706; }
+    .pos-def { background: #2563eb; }
+    .pos-med { background: #059669; }
+    .pos-del { background: #dc2626; }
+    
+    .mister-player-name {
+        font-weight: 800;
+        font-size: 0.88rem;
+        color: #ffffff;
+        margin: 4px 0 2px 0;
+    }
+    .mister-player-meta {
+        font-size: 0.75rem;
+        color: #9ca3af;
+    }
+    .badge-titular {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        margin-top: 4px;
+        display: inline-block;
+        font-weight: 700;
+    }
+    .badge-riesgo {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid #f59e0b;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        margin-top: 4px;
+        display: inline-block;
+        font-weight: 700;
+    }
+    
+    /* Tab Navigation Styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
     .stTabs [data-baseweb="tab"] {
         border-radius: 8px;
-        padding: 10px 18px;
+        padding: 12px 20px;
         background-color: #161b22;
         border: 1px solid #30363d;
         color: #c9d1d9;
+        font-weight: 600;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #238636 !important;
+        background-color: #059669 !important;
         color: #ffffff !important;
-        border-color: #2ea043 !important;
+        border-color: #10b981 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -101,31 +171,21 @@ if "current_squad" not in st.session_state:
 if "current_market" not in st.session_state:
     st.session_state.current_market = []
 if "current_saldo" not in st.session_state:
-    st.session_state.current_saldo = 0
+    st.session_state.current_saldo = 14500000
 
-# Sidebar Section
+# Sidebar Configuration
 with st.sidebar:
+    st.image("https://cdn-mister.mundodeportivo.com/file/cdn-common/logos/mister-md.png", width=180, use_container_width=False)
     st.title("⚽ Mister IA Pro")
-    st.caption("Optimización Táctica y Financiera con IA")
+    st.caption("Optimización Táctica y Financiera para Mister Fantasy")
     
-    # API Key Input (Check env var, st.secrets, or .env)
-    default_key = os.environ.get("GEMINI_API_KEY", "")
-    try:
-        if not default_key and hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
-            default_key = st.secrets["GEMINI_API_KEY"]
-    except Exception:
-        pass
-
-    api_key = st.text_input(
-        "🔑 Gemini API Key",
-        value=default_key,
-        type="password",
-        help="Consíguela gratis en Google AI Studio (ai.google.dev)"
-    )
+    # Gemini API Key configuration
+    api_key_env = os.environ.get("GEMINI_API_KEY", "")
+    api_key = st.text_input("🔑 Gemini API Key", value=api_key_env, type="password", help="Tu API Key de Google Gemini AI Studio.")
     
     st.divider()
     
-    # Mode Selector
+    # Analysis Mode Selector
     st.subheader("⚙️ Modo de Análisis")
     mode = st.radio(
         "Elige cómo obtener tus datos:",
@@ -137,23 +197,22 @@ with st.sidebar:
     
     user_notes = st.text_area(
         "💬 Dudas o consideraciones tácticas",
-        placeholder="Ej: Tengo dudas entre poner a Rüdiger o Baena en el 11, o si debo pujar fuerte por Sancet...",
+        placeholder="Ej: Tengo dudas entre poner a Olmo o Sancet en el 11, o si debo pujar fuerte por Vinícius...",
         help="La IA tendrá en cuenta tus preferencias al generar la estrategia."
     )
     
     # Mode 1: Auto-Sync API
     if mode == "🔄 Auto-Sincronización Mister API":
         st.subheader("1. Conexión a Mister Fantasy")
-        auth_type = st.selectbox("Método de autenticación:", ["Token de Sesión (X-Auth-Token)", "Email y Contraseña"])
+        auth_type = st.selectbox("Método de autenticación:", ["Token o Cookie de Sesión (PHPSESSID)", "Email y Contraseña"])
         
-        # Restore saved token from database if present
         import database
-        saved_token = database.get_setting("mister_token", "")
+        saved_token = database.get_setting("mister_token", "f3b48c91205f19bf35bcf23bc566e941")
         
-        is_token_auth = "Token" in str(auth_type)
+        is_token_auth = "Token" in str(auth_type) or "PHPSESSID" in str(auth_type)
         
         if is_token_auth:
-            mister_token = st.text_input("X-Auth-Token de Mister:", value=saved_token, type="password", help="Tu token quedará guardado para no tener que volver a escribirlo.")
+            mister_token = st.text_input("Cookie / Token de Sesión:", value=saved_token, type="password", help="Tu clave de sesión quedará guardada para vincular la app automáticamente.")
             mister_email, mister_pass = None, None
         else:
             saved_email = database.get_setting("mister_email", "")
@@ -161,6 +220,14 @@ with st.sidebar:
             mister_pass = st.text_input("Contraseña:", type="password")
             mister_token = None
             
+        saved_squad_text = database.get_setting("custom_squad_text", "")
+        custom_squad_text = st.text_area(
+            "📝 Ajuste Manual de Jugadores (Opcional):",
+            value=saved_squad_text,
+            placeholder="Ej: D. Olmo, O. Sancet, M. Casadó, M. Cucurella, F. García, P. Ciss...",
+            help="Puedes modificar o añadir nombres de tu plantilla aquí."
+        )
+        
         analyze_btn = st.button("🚀 Sincronizar y Analizar", type="primary", use_container_width=True)
         
         if analyze_btn:
@@ -169,7 +236,7 @@ with st.sidebar:
             elif not is_token_auth and (not mister_email or not mister_pass):
                 st.error("⚠️ Introduce tu email y contraseña de Mister Fantasy.")
             elif is_token_auth and not mister_token:
-                st.error("⚠️ Introduce tu Token de sesión de Mister Fantasy.")
+                st.error("⚠️ Introduce tu Cookie/Token de sesión de Mister Fantasy.")
             else:
                 with st.spinner("🔄 Conectando a Mister Fantasy y extrayendo datos de tu cuenta..."):
                     credentials = mister_token if is_token_auth else mister_email
@@ -178,7 +245,6 @@ with st.sidebar:
                     if not sync_res["success"]:
                         st.error(f"❌ Error en sincronización: {sync_res.get('error')}")
                     else:
-                        # Save token or credentials permanently to SQLite database
                         if mister_token:
                             database.set_setting("mister_token", mister_token)
                         if mister_email:
@@ -189,7 +255,7 @@ with st.sidebar:
                         st.session_state.current_saldo = sync_res["saldo"]
                         st.success(f"✅ Sincronizado correctamente ({sync_res.get('community_name', 'Mister')})")
                         
-                        with st.spinner("🧠 Analizando estrategia con Gemini AI..."):
+                        with st.spinner("🧠 Analizando estrategia táctica con Gemini AI..."):
                             try:
                                 client = mister_analyzer.get_gemini_client(api_key)
                                 report = mister_analyzer.analyze_structured_data(
@@ -197,7 +263,6 @@ with st.sidebar:
                                 )
                                 st.session_state.report_data = report
                                 
-                                # Set initial chat history context
                                 context_text = f"Contexto de la plantilla:\nEconomía: {report['economia']}\nAlineación: {report['alineacion']}\nMercado: {report['mercado']}"
                                 st.session_state.chat_history = [
                                     types.Content(role="user", parts=[types.Part.from_text(text=context_text)]),
@@ -211,7 +276,7 @@ with st.sidebar:
     elif mode == "📹 Subir Vídeo / Fotos (Visión IA)":
         st.subheader("1. Tu Plantilla y Mercado")
         media_files = st.file_uploader(
-            "Sube vídeos (.mp4, .mov) o fotos (.jpg, .png) de tu equipo y mercado:",
+            "Sube vídeos (.mp4, .mov) o fotos (.jpg, .png) de tu plantilla y mercado:",
             type=["mp4", "mov", "jpg", "jpeg", "png"],
             accept_multiple_files=True
         )
@@ -233,7 +298,7 @@ with st.sidebar:
                             g_file = mister_analyzer.upload_file_to_gemini(client, f.getvalue(), f.name)
                             uploaded_gemini.append(g_file)
                             
-                    with st.spinner("🧠 Procesando imágenes/vídeo con Visión de Gemini AI... (esto puede tardar 15-30s)"):
+                    with st.spinner("🧠 Procesando imágenes/vídeo con Visión de Gemini AI..."):
                         report = mister_analyzer.analyze_media_files(client, uploaded_gemini, user_notes)
                         st.session_state.report_data = report
                         
@@ -249,7 +314,7 @@ with st.sidebar:
     # Mode 3: Demo Mode
     else:
         st.subheader("1. Datos de Demostración")
-        st.info("Utilizará una plantilla y mercado de prueba realistas de LaLiga para testear la app.")
+        st.info("Carga plantilla y mercado de prueba realistas de LaLiga.")
         
         analyze_btn = st.button("🚀 Cargar Informe Demo", type="primary", use_container_width=True)
         
@@ -272,7 +337,7 @@ st.markdown("""
 <div class="header-banner">
     <div>
         <h1>⚽ Mister IA Optimizer Pro</h1>
-        <p style="margin:4px 0 0 0; color:#c9d1d9; font-size:0.95rem;">Asistente Táctico & Financiero Inteligente para Mister Fantasy</p>
+        <p style="margin:4px 0 0 0; color:#e2e8f0; font-size:0.95rem;">Asistente Táctico & Financiero Inteligente para Mister Fantasy (Mundo Deportivo)</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -282,116 +347,186 @@ if st.session_state.current_squad:
     squad = st.session_state.current_squad
     saldo = st.session_state.current_saldo
     total_val = sum(p.get("value", 0) for p in squad)
+    total_pts = sum(p.get("points", 0) for p in squad)
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(f"""
         <div class="metric-card">
-            <h3>💰 Saldo Disponible</h3>
+            <h3>💰 Saldo Líquido</h3>
             <p>{saldo:,.0f} €</p>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown(f"""
         <div class="metric-card">
-            <h3>🛡️ Valor Plantilla</h3>
-            <p>{total_val:,.0f} €</p>
+            <h3>🛡️ Valor de Plantilla</h3>
+            <p style="color:#38bdf8;">{total_val:,.0f} €</p>
         </div>
         """, unsafe_allow_html=True)
     with col3:
         st.markdown(f"""
         <div class="metric-card">
-            <h3>👥 Jugadores en Propiedad</h3>
-            <p style="color:#58a6ff;">{len(squad)}</p>
+            <h3>👥 Futbolistas</h3>
+            <p style="color:#a78bfa;">{len(squad)} Jugadores</p>
         </div>
         """, unsafe_allow_html=True)
     with col4:
         st.markdown(f"""
         <div class="metric-card">
-            <h3>🛒 Jugadores en Mercado</h3>
-            <p style="color:#d29922;">{len(st.session_state.current_market)}</p>
+            <h3>⭐ Puntos Totales</h3>
+            <p style="color:#f59e0b;">{total_pts} Pts</p>
         </div>
         """, unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Report Section Tabs
+
+# Main Report Section Tabs
 if st.session_state.report_data:
-    st.header("📊 Informe Estratégico del Míster")
-    
-    tab_eco, tab_ali, tab_mer = st.tabs([
-        "💰 Economía & Saldos",
-        "👕 Alineación Ideal & Rotaciones",
-        "🛒 Mercado & Especulación"
+    tab_pitch, tab_market, tab_finance, tab_chat = st.tabs([
+        "⚽ Campo Táctico & 11 Ideal",
+        "📈 Mercado & Especulación (Chollos)",
+        "📊 Diagnóstico Financiero",
+        "💬 Consultor Míster Interactivo"
     ])
     
-    with tab_eco:
-        st.markdown(st.session_state.report_data.get("economia", ""))
+    # TAB 1: Campo Táctico & 11 Ideal
+    with tab_pitch:
+        st.subheader("👕 Alineación Ideal & Riesgo de Rotaciones (Formación 4-3-3 / 3-4-3)")
         
-    with tab_ali:
+        if st.session_state.current_squad:
+            squad = st.session_state.current_squad
+            
+            # Group squad by position
+            por_list = [p for p in squad if p.get("position") == "POR"]
+            def_list = [p for p in squad if p.get("position") == "DEF"]
+            med_list = [p for p in squad if p.get("position") == "MED"]
+            del_list = [p for p in squad if p.get("position") == "DEL"]
+            
+            # Tactical Field Render
+            st.markdown('<div class="pitch-field">', unsafe_allow_html=True)
+            
+            # 1. Delanteros Line
+            st.markdown("<h5 style='text-align:center; color:#ef4444; margin-bottom:8px;'>DELANTEROS</h5>", unsafe_allow_html=True)
+            cols_del = st.columns(max(len(del_list), 1))
+            for i, p in enumerate(del_list):
+                with cols_del[i % len(cols_del)]:
+                    badge_cls = "badge-titular" if p.get("points", 0) > 40 else "badge-riesgo"
+                    st.markdown(f"""
+                    <div class="mister-player-card">
+                        <span class="pos-pill pos-del">DEL</span>
+                        <div class="mister-player-name">{p['name']}</div>
+                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+            st.markdown("<div style='margin: 16px 0; border-top: 1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
+            
+            # 2. Centrocampistas Line
+            st.markdown("<h5 style='text-align:center; color:#10b981; margin-bottom:8px;'>CENTROCAMPISTAS</h5>", unsafe_allow_html=True)
+            cols_med = st.columns(max(len(med_list), 1))
+            for i, p in enumerate(med_list):
+                with cols_med[i % len(cols_med)]:
+                    badge_cls = "badge-titular" if p.get("points", 0) > 40 else "badge-riesgo"
+                    st.markdown(f"""
+                    <div class="mister-player-card">
+                        <span class="pos-pill pos-med">MED</span>
+                        <div class="mister-player-name">{p['name']}</div>
+                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+            st.markdown("<div style='margin: 16px 0; border-top: 1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
+            
+            # 3. Defensas Line
+            st.markdown("<h5 style='text-align:center; color:#3b82f6; margin-bottom:8px;'>DEFENSAS</h5>", unsafe_allow_html=True)
+            cols_def = st.columns(max(len(def_list), 1))
+            for i, p in enumerate(def_list):
+                with cols_def[i % len(cols_def)]:
+                    badge_cls = "badge-titular" if p.get("points", 0) > 40 else "badge-riesgo"
+                    st.markdown(f"""
+                    <div class="mister-player-card">
+                        <span class="pos-pill pos-def">DEF</span>
+                        <div class="mister-player-name">{p['name']}</div>
+                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+            st.markdown("<div style='margin: 16px 0; border-top: 1px dashed rgba(255,255,255,0.2);'></div>", unsafe_allow_html=True)
+            
+            # 4. Porteros Line
+            st.markdown("<h5 style='text-align:center; color:#f59e0b; margin-bottom:8px;'>PORTERO</h5>", unsafe_allow_html=True)
+            cols_por = st.columns(max(len(por_list), 1))
+            for i, p in enumerate(por_list):
+                with cols_por[i % len(cols_por)]:
+                    badge_cls = "badge-titular" if p.get("points", 0) > 30 else "badge-riesgo"
+                    st.markdown(f"""
+                    <div class="mister-player-card">
+                        <span class="pos-pill pos-por">POR</span>
+                        <div class="mister-player-name">{p['name']}</div>
+                        <div class="mister-player-meta">⭐ {p.get('points', 0)} pts | {p.get('value', 0)/1e6:.1f} M€</div>
+                        <div class="{badge_cls}">{p.get('fitness', 'Titular 100%')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+            st.markdown('</div>', unsafe_allow_html=True)
+            
         st.markdown(st.session_state.report_data.get("alineacion", ""))
         
-    with tab_mer:
+    # TAB 2: Mercado & Especulación (Chollos)
+    with tab_market:
+        st.subheader("🛒 Mercado de Fichajes & Estrategia de Especulación")
+        
+        if st.session_state.current_market:
+            m_list = st.session_state.current_market
+            st.markdown("#### 🎯 Oportunidades Destacadas del Mercado de Hoy:")
+            m_cols = st.columns(min(len(m_list), 4))
+            for i, p in enumerate(m_list[:8]):
+                with m_cols[i % 4]:
+                    pos_cls = f"pos-{p.get('position', 'MED').lower()}"
+                    st.markdown(f"""
+                    <div class="mister-player-card">
+                        <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
+                        <div class="mister-player-name">{p['name']}</div>
+                        <div class="mister-player-meta">💰 {p.get('value', 0)/1e6:.1f} M€ | ⭐ {p.get('points', 0)} pts</div>
+                        <div class="badge-titular">📈 Revalorización al alza</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            
         st.markdown(st.session_state.report_data.get("mercado", ""))
         
-    st.divider()
-    
-    # Interactive Chat Assistant Section
-    st.header("💬 Consultor Míster Interactivo")
-    st.caption("Pregúntale cualquier duda sobre tu 11, parches de última hora, ofertas de rivales o pujas máximas.")
-    
-    # Render Chat Messages (Skip first context injection message)
-    for i, msg in enumerate(st.session_state.chat_history):
-        if i < 2:
-            continue
-        role = "user" if msg.role == "user" else "assistant"
-        with st.chat_message(role):
-            st.markdown(msg.parts[0].text)
-            
-    # Chat Input
-    if user_query := st.chat_input("Ej: Se me lesionó un defensa, ¿a quién pongo de sustituto?"):
-        with st.chat_message("user"):
-            st.markdown(user_query)
-            
-        with st.chat_message("assistant"):
-            with st.spinner("Pensando respuesta táctica..."):
-                try:
-                    client = mister_analyzer.get_gemini_client(api_key)
-                    ans = mister_analyzer.ask_interactive_chat(
-                        client, st.session_state.chat_history, user_query
-                    )
-                    st.markdown(ans)
-                except Exception as e:
-                    st.error(f"Error al responder: {str(e)}")
-
-else:
-    # Empty State Instructions
-    st.info("👈 Para comenzar, elige un **Modo de Análisis** en la barra lateral y pulsa el botón de analizar.")
-    
-    st.markdown("""
-    ### 🌟 Características Principales de la Aplicación:
-    
-    1. **🔄 Sincronización Directa Mister Fantasy**: Conéctate a tu cuenta y extrae automáticamente tu saldo, plantilla y mercado de hoy sin subir nada manualmente.
-    2. **📹 Visión con IA (Gemini Vision)**: Sube capturas o vídeos haciendo scroll desde tu smartphone.
-    3. **👕 Algoritmo de Rotaciones & Titularidad**: Evaluación rigurosa de titularidades probables para no cometer "ceros".
-    4. **💰 Especulación & Chollos**: Identificación inmediata de jugadores a precio de coste en fuerte alza para ganar saldo gratis.
-    5. **💬 Chat Interactivo Contextual**: Resuelve dudas tácticas específicas en tiempo real.
-    """)
-
-# Mobile Deployment & Usage Guide
-with st.expander("📱 ¿Cómo usar esta aplicación desde tu móvil?"):
-    st.markdown("""
-    #### 1. Opción 1: En tu casa (Misma red WiFi)
-    - Cuando ejecutas la app en tu PC, verás en la terminal dos direcciones:
-      - **Local URL**: `http://localhost:8501`
-      - **Network URL**: `http://192.168.X.X:8501`
-    - Abre **Chrome** o **Safari** en tu móvil y escribe la dirección de **Network URL**.
-
-    #### 2. Opción 2: Desde cualquier lugar (Despliegue Gratis en la Nube)
-    - Sube este proyecto a tu repositorio de GitHub.
-    - Entra en [Streamlit Community Cloud](https://streamlit.io/cloud) y conecta tu repositorio (100% Gratis).
-    - Te dará un enlace web privado (ej. `https://mi-mister-ia.streamlit.app`).
-
-    #### 📱 Consejo PWA (Instalar en Pantalla de Inicio):
-    - En tu móvil (iOS/Android), pulsa en el botón **Compartir / Menú de opciones** de Safari/Chrome y selecciona **"Añadir a la pantalla de inicio"**.
-    - ¡Se abrirá como una App nativa con icono propio!
-    """)
+    # TAB 3: Diagnóstico Financiero
+    with tab_finance:
+        st.subheader("📊 Diagnóstico Económico del Patrimonio")
+        st.markdown(st.session_state.report_data.get("economia", ""))
+        
+    # TAB 4: Consultor Míster Interactivo
+    with tab_chat:
+        st.subheader("💬 Consultor Míster Interactivo")
+        st.caption("Pregúntale cualquier duda sobre tu 11, parches de última hora, ofertas de rivales o pujas máximas.")
+        
+        for i, msg in enumerate(st.session_state.chat_history):
+            if i < 2:
+                continue
+            role = "user" if msg.role == "user" else "assistant"
+            with st.chat_message(role):
+                st.markdown(msg.parts[0].text)
+                
+        if user_query := st.chat_input("Ej: Tengo 14.5M, ¿debo pujar por Vinícius o asegurar a Budimir?"):
+            with st.chat_message("user"):
+                st.markdown(user_query)
+                
+            with st.chat_message("assistant"):
+                with st.spinner("Pensando respuesta táctica con Gemini AI..."):
+                    try:
+                        client = mister_analyzer.get_gemini_client(api_key)
+                        ans = mister_analyzer.ask_interactive_chat(
+                            client, st.session_state.chat_history, user_query
+                        )
+                        st.markdown(ans)
+                    except Exception as e:
+                        st.error(f"Error en chat: {str(e)}")
