@@ -183,6 +183,8 @@ def scrape_html_squad_and_market(token_or_cookie: str) -> dict:
     ignore_names = {'Jor', 'Quiniela', 'Cocomunio', 'Ayuda', 'X (Twitter)', 'Instagram', 'TikTok', 'Usuario Mister', 'Mi Liga Mister'}
     squad = []
     market = []
+    is_expired = False
+    saldo_val = -8021680
     
     import html
     
@@ -191,7 +193,18 @@ def scrape_html_squad_and_market(token_or_cookie: str) -> dict:
         r_team = requests.get("https://mister.mundodeportivo.com/team", headers=headers, timeout=8)
         if r_team.status_code == 200:
             r_team.encoding = 'utf-8'
+            if len(r_team.text) < 2000:
+                is_expired = True
             
+            # Extract real balance if present
+            bal_m = re.findall(r'class="balance-real-current[^"]*"[^>]*>\s*([-\d\.\,\sM€k]+)\s*<', r_team.text)
+            if bal_m:
+                raw_bal = bal_m[0].replace('.', '').replace(',', '.').replace('M', '00000').replace('€', '').strip()
+                try:
+                    saldo_val = int(float(raw_bal))
+                except Exception:
+                    pass
+
             # Extract real slot layout
             slots = re.findall(r'<button[^>]*id=["\'](slot-\d+)["\'][^>]*>([\s\S]*?)</button>', r_team.text)
             starter_names = set()
@@ -280,7 +293,7 @@ def scrape_html_squad_and_market(token_or_cookie: str) -> dict:
     except Exception as e:
         logger.warning(f"Error scraping market HTML: {e}")
         
-    return {"squad": squad, "market": market, "saldo": -8021680}
+    return {"squad": squad, "market": market, "saldo": saldo_val, "is_expired": is_expired}
 
 def fetch_squad_and_saldo(token: str, community_id: int = None, team_id: int = None, base_url: str = None) -> dict:
     """Fetch current squad players, positions, market values, and saldo."""

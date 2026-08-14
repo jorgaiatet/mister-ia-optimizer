@@ -253,139 +253,60 @@ with st.sidebar:
     
     st.divider()
     
-    st.subheader("⚙️ Modo de Análisis")
-    mode = st.radio(
-        "Elige cómo obtener tus datos:",
-        ["🔄 Auto-Sincronización Mister API", "📹 Subir Vídeo / Fotos (Visión IA)", "🎲 Modo Demo (Prueba Rápida)"],
-        index=0
-    )
+    st.subheader("⚙️ Conexión Mister Fantasy")
+    auth_type = st.selectbox("Método de autenticación:", ["Cookie / Token (PHPSESSID)", "Email y Contraseña"])
     
-    st.divider()
+    import database
+    saved_token = database.get_setting("mister_token", "f3b48c91205f19bf35bcf23bc566e941")
     
-    user_notes = st.text_area(
-        "💬 Dudas tácticas o preferencias",
-        placeholder="Ej: Tengo saldo negativo de -8.02M, ¿a quién vendo para ponerme en positivo antes del inicio de la jornada?",
-        help="La IA tendrá en cuenta tus dudas al generar la estrategia."
-    )
+    is_token_auth = "Token" in str(auth_type) or "PHPSESSID" in str(auth_type)
     
-    if mode == "🔄 Auto-Sincronización Mister API":
-        st.subheader("1. Conexión a Mister Fantasy")
-        auth_type = st.selectbox("Método de autenticación:", ["Cookie / Token (PHPSESSID)", "Email y Contraseña"])
-        
-        import database
-        saved_token = database.get_setting("mister_token", "f3b48c91205f19bf35bcf23bc566e941")
-        
-        is_token_auth = "Token" in str(auth_type) or "PHPSESSID" in str(auth_type)
-        
-        if is_token_auth:
-            mister_token = st.text_input("Cookie / Token de Sesión:", value=saved_token, type="password", help="Tu clave de sesión de Mister Fantasy.")
-            mister_email, mister_pass = None, None
-        else:
-            saved_email = database.get_setting("mister_email", "")
-            mister_email = st.text_input("Email de Mister Fantasy:", value=saved_email)
-            mister_pass = st.text_input("Contraseña:", type="password")
-            mister_token = None
-            
-        analyze_btn = st.button("🚀 Sincronizar y Analizar", type="primary", use_container_width=True)
-        
-        if analyze_btn:
-            if not api_key:
-                st.error("⚠️ Introduce tu API Key de Gemini.")
-            elif not is_token_auth and (not mister_email or not mister_pass):
-                st.error("⚠️ Introduce tu email y contraseña de Mister Fantasy.")
-            elif is_token_auth and not mister_token:
-                st.error("⚠️ Introduce tu Cookie/Token de sesión de Mister Fantasy.")
-            else:
-                with st.spinner("🔄 Leyendo plantilla real, alineación y saldo (-8.02M €) desde Mister Fantasy..."):
-                    credentials = mister_token if is_token_auth else mister_email
-                    sync_res = mister_api.sync_full_mister_account(credentials, mister_pass)
-                    
-                    if not sync_res["success"]:
-                        st.error(f"❌ Error en sincronización: {sync_res.get('error')}")
-                    else:
-                        if mister_token:
-                            database.set_setting("mister_token", mister_token)
-                        if mister_email:
-                            database.set_setting("mister_email", mister_email)
-                            
-                        st.session_state.current_squad = sync_res["squad"]
-                        st.session_state.current_market = sync_res["market"]
-                        st.session_state.current_saldo = sync_res["saldo"]
-                        st.success(f"✅ Sincronizado correctamente ({sync_res.get('community_name', 'Mister')})")
-                        
-                        with st.spinner("🧠 Analizando estrategia táctica y plan de ventas con Gemini AI..."):
-                            try:
-                                client = mister_analyzer.get_gemini_client(api_key)
-                                report = mister_analyzer.analyze_structured_data(
-                                    client, sync_res["squad"], sync_res["market"], sync_res["saldo"], user_notes
-                                )
-                                st.session_state.report_data = report
-                                
-                                context_text = f"Contexto de la plantilla:\nEconomía: {report['economia']}\nAlineación: {report['alineacion']}\nMercado: {report['mercado']}"
-                                st.session_state.chat_history = [
-                                    types.Content(role="user", parts=[types.Part.from_text(text=context_text)]),
-                                    types.Content(role="model", parts=[types.Part.from_text(text="¡Entendido! He analizado tu plantilla real y tu saldo de -8.02M €. ¿Qué dudas tienes?")])
-                                ]
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Error de análisis IA: {str(e)}")
-
-    elif mode == "📹 Subir Vídeo / Fotos (Visión IA)":
-        st.subheader("1. Tu Plantilla y Mercado")
-        media_files = st.file_uploader(
-            "Sube vídeos (.mp4, .mov) o fotos (.jpg, .png) de tu plantilla y mercado:",
-            type=["mp4", "mov", "jpg", "jpeg", "png"],
-            accept_multiple_files=True
-        )
-        
-        analyze_btn = st.button("🚀 Analizar con Visión IA", type="primary", use_container_width=True)
-        
-        if analyze_btn:
-            if not api_key:
-                st.error("⚠️ Introduce tu API Key de Gemini.")
-            elif not media_files:
-                st.error("⚠️ Sube al menos un vídeo o imagen de tu plantilla.")
-            else:
-                try:
-                    client = mister_analyzer.get_gemini_client(api_key)
-                    uploaded_gemini = []
-                    
-                    with st.spinner("📤 Subiendo archivos a los servidores de Gemini AI..."):
-                        for f in media_files:
-                            g_file = mister_analyzer.upload_file_to_gemini(client, f.getvalue(), f.name)
-                            uploaded_gemini.append(g_file)
-                            
-                    with st.spinner("🧠 Procesando imágenes/vídeo con Visión de Gemini AI..."):
-                        report = mister_analyzer.analyze_media_files(client, uploaded_gemini, user_notes)
-                        st.session_state.report_data = report
-                        
-                        context_text = f"Contexto:\nEconomía: {report['economia']}\nAlineación: {report['alineacion']}\nMercado: {report['mercado']}"
-                        st.session_state.chat_history = [
-                            types.Content(role="user", parts=[types.Part.from_text(text=context_text)]),
-                            types.Content(role="model", parts=[types.Part.from_text(text="¡Procesado con éxito por Visión IA! ¿En qué te ayudo con tu estrategia?")])
-                        ]
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Error de procesamiento: {str(e)}")
-
+    if is_token_auth:
+        mister_token = st.text_input("Cookie PHPSESSID Actual:", value=saved_token, type="password", help="Pega tu nueva Cookie PHPSESSID si has vendido jugadores hoy.")
+        mister_email, mister_pass = None, None
     else:
-        st.subheader("1. Datos de Demostración")
-        st.info("Carga plantilla y mercado de prueba realistas.")
+        saved_email = database.get_setting("mister_email", "")
+        mister_email = st.text_input("Email de Mister Fantasy:", value=saved_email)
+        mister_pass = st.text_input("Contraseña:", type="password")
+        mister_token = None
         
-        analyze_btn = st.button("🚀 Cargar Informe Demo", type="primary", use_container_width=True)
-        
-        if analyze_btn:
-            st.session_state.current_squad = DEMO_SQUAD
-            st.session_state.current_market = DEMO_MARKET
-            st.session_state.current_saldo = DEMO_SALDO
-            st.session_state.report_data = DEMO_REPORT
-            
-            context_text = f"Contexto Demo:\nEconomía: {DEMO_REPORT['economia']}\nAlineación: {DEMO_REPORT['alineacion']}\nMercado: {DEMO_REPORT['mercado']}"
-            st.session_state.chat_history = [
-                types.Content(role="user", parts=[types.Part.from_text(text=context_text)]),
-                types.Content(role="model", parts=[types.Part.from_text(text="Modo Demo cargado. Puedes hacerme cualquier consulta táctica sobre esta plantilla de demostración.")])
-            ]
-            st.rerun()
+    analyze_btn = st.button("🚀 Sincronizar Plantilla al Instante", type="primary", use_container_width=True)
+    
+    if analyze_btn:
+        if not api_key:
+            st.error("⚠️ Introduce tu API Key de Gemini.")
+        elif not is_token_auth and (not mister_email or not mister_pass):
+            st.error("⚠️ Introduce tu email y contraseña de Mister Fantasy.")
+        elif is_token_auth and not mister_token:
+            st.error("⚠️ Introduce tu Cookie/Token de sesión de Mister Fantasy.")
+        else:
+            with st.spinner("🔄 Leyendo plantilla real, alineación y saldo en vivo desde Mister Fantasy..."):
+                credentials = mister_token if is_token_auth else mister_email
+                sync_res = mister_api.sync_full_mister_account(credentials, mister_pass)
+                
+                if not sync_res["success"]:
+                    st.error(f"❌ Error en sincronización: {sync_res.get('error')}")
+                else:
+                    if mister_token:
+                        database.set_setting("mister_token", mister_token)
+                    if mister_email:
+                        database.set_setting("mister_email", mister_email)
+                        
+                    st.session_state.current_squad = sync_res["squad"]
+                    st.session_state.current_market = sync_res["market"]
+                    st.session_state.current_saldo = sync_res["saldo"]
+                    st.success(f"✅ Sincronizado correctamente ({sync_res.get('community_name', 'Mister')})")
+                    
+                    with st.spinner("🧠 Analizando estrategia táctica y plan de ventas con Gemini AI..."):
+                        try:
+                            client = mister_analyzer.get_gemini_client(api_key)
+                            report = mister_analyzer.analyze_structured_data(
+                                client, sync_res["squad"], sync_res["market"], sync_res["saldo"], user_notes
+                            )
+                            st.session_state.report_data = report
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error de análisis IA: {str(e)}")
 
 
 # Header Banner
@@ -445,6 +366,26 @@ if st.session_state.current_squad:
         </div>
         """, unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
+
+    # Interactive Squad Adjuster Expander
+    with st.expander("✏️ Ajustar / Quitar Jugadores Vendidos o Modificar Puntos al Minuto"):
+        st.write("Si has vendido algún jugador hoy en Mister Fantasy o quieres actualizar tus puntos/saldo al instante, selecciónalo aquí:")
+        
+        all_names = [p["name"] for p in squad]
+        selected_names = st.multiselect("Jugadores en tu plantilla actual:", options=all_names, default=all_names)
+        
+        c_saldo, c_save = st.columns([2, 1])
+        with c_saldo:
+            new_saldo = st.number_input("Nuevo Saldo Actual (€):", value=int(saldo), step=100000)
+        with c_save:
+            st.markdown("<br>", unsafe_allow_html=True)
+            apply_changes = st.button("💾 Aplicar Cambios A Mi Plantilla", type="primary", use_container_width=True)
+            
+        if apply_changes:
+            st.session_state.current_squad = [p for p in squad if p["name"] in selected_names]
+            st.session_state.current_saldo = new_saldo
+            st.success("✅ Plantilla actualizada al minuto.")
+            st.rerun()
 
 
 def build_player_card_html(p):
