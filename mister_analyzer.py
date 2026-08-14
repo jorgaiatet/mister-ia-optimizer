@@ -23,10 +23,10 @@ class MisterReport(BaseModel):
     economia: str = Field(description="Diagnóstico financiero completo: saldo real disponible, valor de plantilla, margen de deuda del 25%, bonificación fija de 1.5M/jornada y plan de compras/ventas.")
     alineacion: str = Field(description="11 titular ideal con probabilidades de titularidad contrastadas (ej: 95% Titular Confirmado), estado médico, tarjetas y apercibidos.")
     mercado: str = Field(description="Oportunidades de mercado divididas en Rendimiento Inmediato y Especulación/Chollos al alza para hacer dinero rápido teniendo en cuenta la regla de 24h para revender.")
-    especulacion: str = Field(description="Plan detallado de trading financiero: qué jugadores comprar HOY para ganar dinero en 3-5 días y cuándo venderlos respetando las 24h de permanencia.")
-    rivales: str = Field(description="Scouting contable de rivales (Ima, Oct, Paurra-20, Piwinho): saldos calculados desde los 60M€ de partida, margen de deuda del 25%, capacidad máxima de puja y jugadores en venta (máx 5 simultáneos).")
+    especulacion: str = Field(description="Plan detallado de trading financiero: qué jugadores comprar HOY para ganar dinero en 3-5 días y alertas de venta de jugadores a la baja.")
+    rivales: str = Field(description="Scouting contable de los 10 rivales reales de la liga (piwinho-, ima, vicen75, paurra-20, rafa, fco-javier-juan-perez, prosinecki, jorge-garcia, oct): saldos calculados desde los 60M€ de partida, margen de deuda del 25% y jugadores en venta.")
     reglas_liga: str = Field(description="Desglose detallado de la configuración 100% real extraída de las capturas oficiales de la liga.")
-    evolucion: str = Field(description="Evolución de la liga, comparativa patrimonial respecto a los 60M€ iniciales y proyección de ingresos para la Jornada 1.")
+    evolucion: str = Field(description="Evolución de la liga, comparativa patrimonial de los 10 mánagers y proyección de ingresos para la Jornada 1.")
 
 class BidRecommendation(BaseModel):
     veredicto: str = Field(description="Veredicto: '🟢 PUJA GANADORA SEGURA', '🟡 PUJA EN RIESGO / COMPETIDA' o '🔴 PUJA INSUFICIENTE'.")
@@ -103,7 +103,7 @@ def analyze_structured_data(client: genai.Client, squad: List[Dict], market: Lis
     - Capacidad Máxima de Puja: {saldo + total_val*0.25:,.0f} €
     - Plantilla Actual del Usuario: {json.dumps(squad, ensure_ascii=False, indent=2)}
     - Mercado de Hoy: {json.dumps(market, ensure_ascii=False, indent=2)}
-    - Rivales de la Liga Comunitaria (Base inicial 60M€): Ima, Oct, Paurra-20, Piwinho
+    - Miembros Reales de la Liga (10 Participantes): jor (Tú), piwinho-, ima, vicen75, paurra-20, rafa, fco-javier-juan-perez, prosinecki, jorge-garcia, oct
     
     Notas o dudas del usuario:
     {user_notes if user_notes else 'Ninguna.'}
