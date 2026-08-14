@@ -1,6 +1,6 @@
 """
 Gemini AI Analyzer module for Mister IA Optimizer Pro.
-Uses google-genai SDK for multimodal analysis, web research on lineups, injuries, suspensions, rival intelligence, and league evolution.
+Advanced Scouting, Exact League Rules (Screenshots Confirmed), 25% Debt Margin Accounting, Bid Simulator & Speculation Trading Engine.
 """
 
 import os
@@ -20,41 +20,53 @@ CANDIDATE_MODELS = [
 ]
 
 class MisterReport(BaseModel):
-    economia: str = Field(description="Diagnóstico financiero completo: saldo disponible, valor total de plantilla, análisis de liquidez y plan de compras/ventas.")
-    alineacion: str = Field(description="11 titular ideal con probabilidades de titularidad contrastadas (ej: 95% Titular Confirmado), estado médico (lesiones/molestias), tarjetas y apercibidos.")
-    mercado: str = Field(description="Oportunidades de mercado de hoy divididas en Rendimiento Inmediato y Especulación/Chollos al alza.")
-    rivales: str = Field(description="Análisis de inteligencia de rivales de la comunidad (Ima, Oct, Paurra-20, Piwinho), fortalezas, debilidades y comparación patrimonial.")
-    evolucion: str = Field(description="Evolución de la liga, comparativa de plantillas, jugadores más cotizados y previsión de puntos para la Jornada 1.")
+    economia: str = Field(description="Diagnóstico financiero completo: saldo real disponible, valor de plantilla, margen de deuda del 25%, bonificación fija de 1.5M/jornada y plan de compras/ventas.")
+    alineacion: str = Field(description="11 titular ideal con probabilidades de titularidad contrastadas (ej: 95% Titular Confirmado), estado médico, tarjetas y apercibidos.")
+    mercado: str = Field(description="Oportunidades de mercado divididas en Rendimiento Inmediato y Especulación/Chollos al alza para hacer dinero rápido teniendo en cuenta la regla de 24h para revender.")
+    especulacion: str = Field(description="Plan detallado de trading financiero: qué jugadores comprar HOY para ganar dinero en 3-5 días y cuándo venderlos respetando las 24h de permanencia.")
+    rivales: str = Field(description="Scouting contable de rivales (Ima, Oct, Paurra-20, Piwinho): saldos calculados desde los 60M€ de partida, margen de deuda del 25%, capacidad máxima de puja y jugadores en venta (máx 5 simultáneos).")
+    reglas_liga: str = Field(description="Desglose detallado de la configuración 100% real extraída de las capturas oficiales de la liga.")
+    evolucion: str = Field(description="Evolución de la liga, comparativa patrimonial respecto a los 60M€ iniciales y proyección de ingresos para la Jornada 1.")
+
+class BidRecommendation(BaseModel):
+    veredicto: str = Field(description="Veredicto: '🟢 PUJA GANADORA SEGURA', '🟡 PUJA EN RIESGO / COMPETIDA' o '🔴 PUJA INSUFICIENTE'.")
+    explicacion: str = Field(description="Explicación detallada analizando qué rivales necesitan la posición del jugador y si tienen saldo o capacidad de endeudamiento del 25% para superarte.")
+    rivales_amenaza: List[str] = Field(description="Lista de nombres de rivales que tienen interés táctico y dinero disponible para pujar por este jugador.")
+    puja_optima_sugerida: str = Field(description="Monto exacto en euros (€) recomendado para asegurar el fichaje con el menor sobrecoste posible.")
 
 SYSTEM_PROMPT = """
-Eres el analista táctico, deportivo y financiero de élite para Mister Fantasy (Mundo Deportivo) y LaLiga Española.
-Tu misión es investigar y optimizar la plantilla del usuario para ganar su liga con la máxima ventaja sobre sus rivales.
+Eres el Director Deportivo y Asesor Financiero número 1 de Mister Fantasy (Mundo Deportivo) y LaLiga Española.
+Tu misión es hacer ganar al usuario su liga comunitaria maximizando tanto sus puntos en el 11 titular como su patrimonio económico mediante especulación, control contable de los rivales y asesoría inteligente de pujas en el mercado.
 
-INSTRUCCIONES CLAVE POR SECCIÓN:
+CONFIGURACIÓN Y REGLAS OFICIALES CONFIRMADAS DE LA LIGA:
+1. **Presupuesto y Fondo Inicial**:
+   - Base de inicio: Plantilla inicial + dinero hasta 50.000.000 € de patrimonio + 10.000.000 € extra del Administrador = **60.000.000 € de partida**.
+2. **Límite de Endeudamiento Máximo**:
+   - **Saldo Actual + 25% del Valor del Equipo**.
+3. **Bonificaciones Oficiales por Jornada**:
+   - **Bonificación fija garantizada**: **1.500.000 € por jornada**.
+   - **Bonificación por punto**: **35.000 € / punto**.
+   - **Bonificación por gol anotado**: **500.000 € / gol**.
+   - **Bonificación por jugador en el 11 ideal**: **250.000 € / jugador**.
+   - **Bonificación por clasificación de la jornada**:
+     * 1º: 1.500.000 €
+     * 2º: 1.300.000 €
+     * 3º: 1.150.000 €
+     * 4º: 1.000.000 €
+     * 5º: 1.000.000 €
+     * 6º: 1.000.000 €
+     * 7º: 1.150.000 €
+     * 8º: 1.300.000 €
+     * 9º: 1.500.000 €
+4. **Normas de Mercado, Ventas y Cláusulas**:
+   - Ofertas de mercado automáticas e inmediatas al poner a la venta.
+   - Máximo 5 jugadores simultáneos en venta por miembro.
+   - Tiempo mínimo entre compra y venta: 24 horas.
+   - Prohibido ofertar por debajo del valor de mercado entre miembros.
+   - Cláusulas activas (traspaso inmediato; bloqueo primeras 24h tras fichaje; máx 3 robos/día; bloqueo 24h antes del inicio de jornada).
+   - Cesiones permitidas (coste mín 10%/día). Cambios durante jornada: No permitidos.
 
-1. **Economía & Diagnóstico Financiero**:
-   - Analiza el Saldo Real y el Valor Total de la plantilla.
-   - Recomienda si conviene mantener la liquidez o invertir en posiciones clave (como portería o delantera).
-
-2. **Alineación, Probabilidades de Titularidad & Estado Físico**:
-   - Para cada uno de los jugadores del 11 titular y banquillo, evalúa su probabilidad real de jugar según las últimas noticias de los clubes y prensa deportiva:
-     * Porcentaje de titularidad: (ej. `95% Titular Confirmado`, `85% Probable Titular`, `60% Duda Táctica / Rotación`, `30% Suplente`).
-     * Estado médico y físico: (ej. `100% Disponible`, `Molestias`, `En proceso de recuperación`).
-     * Situación disciplinaria: (ej. `Sin sanciones`, `Apercibido 0/5 amarillas`).
-
-3. **Mercado de Fichajes**:
-   - Jugadores recomendados para fichar hoy.
-   - Jugadores con alta revalorización económica diaria para especular.
-
-4. **Inteligencia de Rivales en la Comunidad**:
-   - Analiza a los rivales directos de la liga del usuario (Ima, Oct, Paurra-20, Piwinho).
-   - Detecta sus puntos débiles y dónde el usuario tiene ventaja competitiva (ej. centro del campo estelar con Olmo y Sancet).
-
-5. **Evolución de la Liga & Previsión J1**:
-   - Proyección estimada de puntos para la Jornada 1.
-   - Estrategia para dominar la tabla en las primeras 5 jornadas.
-
-Formatea siempre tu respuesta en Markdown limpio, con tablas y emojis deportivos bien estructurados.
+Formatea siempre tu respuesta en Markdown limpio, con tablas y formato visual atractivo.
 """
 
 def get_gemini_client(api_key: str = None) -> genai.Client:
@@ -82,12 +94,16 @@ def generate_with_fallback(client: genai.Client, contents: List[Any], config: ty
 
 def analyze_structured_data(client: genai.Client, squad: List[Dict], market: List[Dict], saldo: float, user_notes: str = "") -> Dict[str, str]:
     """Generate MisterReport from structured JSON data."""
+    total_val = sum(p.get('value', 0) for p in squad)
     user_context = f"""
     DATOS ACTUALES DE LA PLANTILLA Y MERCADO:
-    - Saldo Disponible: {saldo:,.0f} €
+    - Saldo Disponible del Usuario: {saldo:,.0f} €
+    - Valor de Plantilla: {total_val:,.0f} €
+    - Margen de Deuda Permitido (25% de la plantilla): {total_val*0.25:,.0f} €
+    - Capacidad Máxima de Puja: {saldo + total_val*0.25:,.0f} €
     - Plantilla Actual del Usuario: {json.dumps(squad, ensure_ascii=False, indent=2)}
     - Mercado de Hoy: {json.dumps(market, ensure_ascii=False, indent=2)}
-    - Rivales de la Liga Comunitaria: Ima, Oct, Paurra-20, Piwinho
+    - Rivales de la Liga Comunitaria (Base inicial 60M€): Ima, Oct, Paurra-20, Piwinho
     
     Notas o dudas del usuario:
     {user_notes if user_notes else 'Ninguna.'}
@@ -104,6 +120,40 @@ def analyze_structured_data(client: genai.Client, squad: List[Dict], market: Lis
     response = generate_with_fallback(client, [prompt], config)
     return json.loads(response.text)
 
+def evaluate_market_bid(client: genai.Client, player: Dict, user_bid: float, rivals: List[Dict], user_saldo: float) -> Dict[str, Any]:
+    """
+    Evaluates whether user's bid for a market player is optimal, sufficient, or risky based on rival finances and 25% debt margin.
+    """
+    prompt = f"""
+    {SYSTEM_PROMPT}
+    
+    EVALUACIÓN DE PUJA PARA EL MERCADO:
+    
+    JUGADOR OBJETIVO EN EL MERCADO:
+    - Nombre: {player.get('name')} ({player.get('position')}) - {player.get('team')}
+    - Valor de Mercado Actual: {player.get('value'):,} €
+    - Puja Propuesta por el Usuario: {user_bid:,.0f} €
+    - Saldo Disponible del Usuario: {user_saldo:,.0f} €
+    
+    CONTABILIDAD Y CAPACIDAD MÁXIMA DE PUJA DE LOS RIVALES (Límite: Saldo + 25% Valor Plantilla):
+    {json.dumps(rivals, ensure_ascii=False, indent=2)}
+    
+    Analiza:
+    1. ¿A qué rivales les hace falta este jugador por su posición y estado de plantilla?
+    2. ¿Tienen esos rivales saldo líquido o capacidad de endeudamiento del 25% para superar la puja de {user_bid:,.0f} €?
+    3. ¿La puja del usuario es ganadora segura, está en riesgo o es insuficiente?
+    4. ¿Cuál es el valor de puja óptimo sugerido para asegurar al jugador sin pagar de más?
+    """
+    
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=BidRecommendation,
+        temperature=0.2
+    )
+    
+    response = generate_with_fallback(client, [prompt], config)
+    return json.loads(response.text)
+
 def ask_interactive_chat(client: genai.Client, chat_history: List[types.Content], user_query: str) -> str:
     """Send query to interactive chat session with full tactical context history."""
     chat_history.append(
@@ -111,7 +161,7 @@ def ask_interactive_chat(client: genai.Client, chat_history: List[types.Content]
     )
     
     config = types.GenerateContentConfig(
-        system_instruction="Eres un asesor experto en Mister Fantasy. Respondes con precisión, tono deportivo táctico y formato Markdown."
+        system_instruction="Eres un asesor deportivo y financiero experto en Mister Fantasy. Respondes con precisión, táctica y formato Markdown."
     )
     
     response = generate_with_fallback(client, chat_history, config)
