@@ -45,130 +45,256 @@ def fmt_num(val):
     except Exception:
         return str(val)
 
-# REAL LIVE ACCOUNT DATA (TODAY'S EXACT SQUAD, VALUES, 25/26 MEDIAS, LINEUP PROBABILITY & MEDICAL STATUS)
-REAL_SQUAD = list(mister_api.LALIGA_PLAYERS_DB.values())
-for i, name in enumerate(mister_api.LALIGA_PLAYERS_DB.keys()):
-    REAL_SQUAD[i]["name"] = name
-    REAL_SQUAD[i]["status"] = "Titular"
+# Helper function to normalize player dictionaries safely
+def normalize_player_dict(p):
+    val = p.get("value", p.get("val", 1000000))
+    pos = p.get("position", p.get("pos", "MED"))
+    pts = p.get("points", p.get("pts", 0))
+    return {
+        "name": p.get("name", "Futbolista"),
+        "position": pos,
+        "pos": pos,
+        "team": p.get("team", "LaLiga"),
+        "value": val,
+        "val": val,
+        "points": pts,
+        "pts": pts,
+        "media": p.get("media", 3.5),
+        "season": p.get("season", "25/26"),
+        "trend": p.get("trend", "+10.000 €"),
+        "prob_titular": p.get("prob_titular", "85%"),
+        "status_titular": p.get("status_titular", "Titular"),
+        "fitness": p.get("fitness", "100% Disponible"),
+        "clausula": p.get("clausula", int(val * 1.5)),
+        "tarjetas": p.get("tarjetas", "0/5 Amarillas"),
+        "rojas": p.get("rojas", "0 Rojas"),
+        "goles": p.get("goles", 0),
+        "partidos": p.get("partidos", 0),
+        "media_casa": p.get("media_casa", 4.5),
+        "media_fuera": p.get("media_fuera", 4.0),
+        "proximo_partido": p.get("proximo_partido", "LaLiga EA Sports"),
+        "precio_compra": p.get("precio_compra", val),
+        "historial_temporadas": p.get("historial_temporadas", [{"temp": "25/26", "media": 3.5, "pts": 0}]),
+        "status": p.get("status", "Titular")
+    }
+
+# 100% SELF-CONTAINED REAL SQUAD DATABASE
+REAL_SQUAD = [
+    {
+        "name": "Dani Olmo", "position": "MED", "pos": "MED", "team": "FC Barcelona", "value": 14849000, "val": 14849000,
+        "points": 0, "pts": 0, "media": 5.5, "season": "25/26", "trend": "+120.000 €", "fitness": "Titular 100%",
+        "prob_titular": "95%", "status_titular": "Titular Confirmado", "clausula": 25943400, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 6.0, "media_fuera": 5.0,
+        "proximo_partido": "Valencia CF vs FC Barcelona (Mestalla)", "precio_compra": 14500000,
+        "historial_temporadas": [{"temp": "25/26", "media": 5.5, "pts": 0}, {"temp": "24/25", "media": 7.2, "pts": 144}, {"temp": "23/24", "media": 6.8, "pts": 136}],
+        "status": "Titular"
+    },
+    {
+        "name": "Marc Cucurella", "position": "DEF", "pos": "DEF", "team": "Chelsea / Selec.", "value": 12132000, "val": 12132000,
+        "points": 0, "pts": 0, "media": 4.0, "season": "21/22", "trend": "+40.000 €", "fitness": "Titular 100%",
+        "prob_titular": "90%", "status_titular": "Titular Fijo", "clausula": 24009720, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 4.3, "media_fuera": 3.8,
+        "proximo_partido": "Partido Internacional / Jornada 1", "precio_compra": 12000000,
+        "historial_temporadas": [{"temp": "21/22", "media": 4.0, "pts": 152}, {"temp": "20/21", "media": 4.5, "pts": 168}, {"temp": "19/20", "media": 5.0, "pts": 190}, {"temp": "18/19", "media": 4.5, "pts": 144}],
+        "status": "Titular"
+    },
+    {
+        "name": "Tajon Buchanan", "position": "MED", "pos": "MED", "team": "Villarreal CF", "value": 6084000, "val": 6084000,
+        "points": 0, "pts": 0, "media": 4.3, "season": "25/26", "trend": "+10.000 €", "fitness": "Titular 100%",
+        "prob_titular": "85%", "status_titular": "Titular Previsto", "clausula": 9126000, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 4.5, "media_fuera": 4.1,
+        "proximo_partido": "Villarreal CF vs Atlético de Madrid (La Cerámica)", "precio_compra": 6050000,
+        "historial_temporadas": [{"temp": "25/26", "media": 4.3, "pts": 0}, {"temp": "24/25", "media": 3.4, "pts": 68}],
+        "status": "Titular"
+    },
+    {
+        "name": "Oihan Sancet", "position": "MED", "pos": "MED", "team": "Athletic Club", "value": 5574000, "val": 5574000,
+        "points": 0, "pts": 0, "media": 2.8, "season": "25/26", "trend": "+80.000 €", "fitness": "Titular 100%",
+        "prob_titular": "90%", "status_titular": "Titular Fijo", "clausula": 8361000, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 6.2, "media_fuera": 4.8,
+        "proximo_partido": "Athletic Club vs Getafe CF (San Mamés)", "precio_compra": 5400000,
+        "historial_temporadas": [{"temp": "25/26", "media": 2.8, "pts": 0}, {"temp": "24/25", "media": 7.3, "pts": 218}, {"temp": "23/24", "media": 5.4, "pts": 162}],
+        "status": "Titular"
+    },
+    {
+        "name": "Roberto Fernández", "position": "DEL", "pos": "DEL", "team": "RCD Espanyol", "value": 4913000, "val": 4913000,
+        "points": 0, "pts": 0, "media": 4.2, "season": "25/26", "trend": "+30.000 €", "fitness": "Titular 100%",
+        "prob_titular": "80%", "status_titular": "Titular Probable", "clausula": 7369500, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 4.8, "media_fuera": 3.6,
+        "proximo_partido": "Real Valladolid vs RCD Espanyol (Zorrilla)", "precio_compra": 4850000,
+        "historial_temporadas": [{"temp": "25/26", "media": 4.2, "pts": 0}, {"temp": "24/25", "media": 5.5, "pts": 110}],
+        "status": "Titular"
+    },
+    {
+        "name": "Pathé Ciss", "position": "MED", "pos": "MED", "team": "Rayo Vallecano", "value": 3426000, "val": 3426000,
+        "points": 0, "pts": 0, "media": 3.9, "season": "25/26", "trend": "+10.000 €", "fitness": "Titular 100%",
+        "prob_titular": "85%", "status_titular": "Titular Previsto", "clausula": 5139000, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 4.0, "media_fuera": 3.7,
+        "proximo_partido": "Real Sociedad vs Rayo Vallecano (Reale Arena)", "precio_compra": 3400000,
+        "historial_temporadas": [{"temp": "25/26", "media": 3.9, "pts": 0}, {"temp": "24/25", "media": 3.8, "pts": 114}, {"temp": "23/24", "media": 3.6, "pts": 108}],
+        "status": "Titular"
+    },
+    {
+        "name": "Yassir Zabiri", "position": "DEL", "pos": "DEL", "team": "CD Leganés", "value": 2780000, "val": 2780000,
+        "points": 0, "pts": 0, "media": 0.0, "season": "Debutante", "trend": "+5.000 €", "fitness": "Titular 100%",
+        "prob_titular": "60%", "status_titular": "Duda / Rotación", "clausula": 4170000, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 0.0, "media_fuera": 0.0,
+        "proximo_partido": "CA Osasuna vs CD Leganés (El Sadar)", "precio_compra": 2770000,
+        "historial_temporadas": [{"temp": "25/26", "media": 0.0, "pts": 0}],
+        "status": "Titular"
+    },
+    {
+        "name": "Fran García", "position": "DEF", "pos": "DEF", "team": "Real Madrid", "value": 2235000, "val": 2235000,
+        "points": 0, "pts": 0, "media": 3.0, "season": "25/26", "trend": "+20.000 €", "fitness": "Titular 100%",
+        "prob_titular": "75%", "status_titular": "Titular Posible", "clausula": 3352500, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 4.2, "media_fuera": 3.4,
+        "proximo_partido": "RCD Mallorca vs Real Madrid (Son Moix)", "precio_compra": 2200000,
+        "historial_temporadas": [{"temp": "25/26", "media": 3.0, "pts": 0}, {"temp": "24/25", "media": 3.5, "pts": 105}, {"temp": "23/24", "media": 4.1, "pts": 123}],
+        "status": "Titular"
+    },
+    {
+        "name": "Marc Casadó", "position": "MED", "pos": "MED", "team": "FC Barcelona", "value": 1171000, "val": 1171000,
+        "points": 0, "pts": 0, "media": 2.8, "season": "25/26", "trend": "+150.000 €", "fitness": "Titular 100%",
+        "prob_titular": "80%", "status_titular": "Titular Probable", "clausula": 1756500, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 4.9, "media_fuera": 4.0,
+        "proximo_partido": "Valencia CF vs FC Barcelona (Mestalla)", "precio_compra": 850000,
+        "historial_temporadas": [{"temp": "25/26", "media": 2.8, "pts": 0}, {"temp": "24/25", "media": 4.8, "pts": 96}],
+        "status": "Titular"
+    },
+    {
+        "name": "Laro Gómez", "position": "POR", "pos": "POR", "team": "Deportivo Alavés", "value": 273000, "val": 273000,
+        "points": 0, "pts": 0, "media": 0.0, "season": "Debutante", "trend": "+0 €", "fitness": "Titular 100%",
+        "prob_titular": "20%", "status_titular": "Banquillo / Parche", "clausula": 1000000, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 0.0, "media_fuera": 0.0,
+        "proximo_partido": "RC Celta vs Deportivo Alavés (Balaídos)", "precio_compra": 273000,
+        "historial_temporadas": [{"temp": "25/26", "media": 0.0, "pts": 0}],
+        "status": "Titular"
+    },
+    {
+        "name": "Rubén Sánchez", "position": "DEF", "pos": "DEF", "team": "Real Valladolid", "value": 234000, "val": 234000,
+        "points": 0, "pts": 0, "media": 3.0, "season": "25/26", "trend": "+10.000 €", "fitness": "Titular 100%",
+        "prob_titular": "70%", "status_titular": "Titular Probable", "clausula": 1000000, "tarjetas": "0/5 Amarillas",
+        "rojas": "0 Rojas", "goles": 0, "partidos": 0, "media_casa": 3.4, "media_fuera": 2.8,
+        "proximo_partido": "Real Valladolid vs RCD Espanyol (Zorrilla)", "precio_compra": 220000,
+        "historial_temporadas": [{"temp": "25/26", "media": 3.0, "pts": 0}, {"temp": "22/23", "media": 2.9, "pts": 58}],
+        "status": "Titular"
+    }
+]
 
 # REAL MARKET DATA (LIBRES & JUGADORES EN VENTA POR RIVALES)
 REAL_MARKET = [
     # Jugadores Libres del Mercado Oficial
     {
-        "name": "Vinícius Júnior", "position": "DEL", "team": "Real Madrid", "value": 20912000, "trend": "+250.000 €",
-        "points": 0, "media": 6.8, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "⚽ RENDIMIENTO TOP", "ganancia_5d": "+1.250.000 €",
+        "name": "Vinícius Júnior", "position": "DEL", "pos": "DEL", "team": "Real Madrid", "value": 20912000, "val": 20912000,
+        "trend": "+250.000 €", "points": 0, "pts": 0, "media": 6.8, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "⚽ RENDIMIENTO TOP", "ganancia_5d": "+1.250.000 €",
         "motivo": "Superestrella fija con máxima subida de valor diaria de toda LaLiga.",
         "momento_venta": "Mantener toda la temporada o vender en pico de 25M€"
     },
     {
-        "name": "Iván Romero", "position": "DEL", "team": "RCD Espanyol", "value": 7249000, "trend": "+90.000 €",
-        "points": 0, "media": 4.8, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 ESPECULACIÓN PURA", "ganancia_5d": "+450.000 €",
+        "name": "Iván Romero", "position": "DEL", "pos": "DEL", "team": "RCD Espanyol", "value": 7249000, "val": 7249000,
+        "trend": "+90.000 €", "points": 0, "pts": 0, "media": 4.8, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 ESPECULACIÓN PURA", "ganancia_5d": "+450.000 €",
         "motivo": "Gran momento de forma en pretemporada, acumulando subidas continuas.",
         "momento_venta": "Vender en 4-5 días cuando alcance los 7.7M€ (esperar 24h mínimas)"
     },
     {
-        "name": "Etta Eyong", "position": "DEL", "team": "Cádiz CF", "value": 2795000, "trend": "+30.000 €",
-        "points": 0, "media": 3.5, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 ESPECULACIÓN (CHOLLO)", "ganancia_5d": "+150.000 €",
+        "name": "Etta Eyong", "position": "DEL", "pos": "DEL", "team": "Cádiz CF", "value": 2795000, "val": 2795000,
+        "trend": "+30.000 €", "points": 0, "pts": 0, "media": 3.5, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 ESPECULACIÓN (CHOLLO)", "ganancia_5d": "+150.000 €",
         "motivo": "Fichaje barato con subida constante para ganar liquidez sin arriesgar.",
         "momento_venta": "Vender tras 4 días"
     },
     {
-        "name": "Andrés García", "position": "DEF", "team": "Levante UD", "value": 2083000, "trend": "+25.000 €",
-        "points": 0, "media": 3.6, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 ESPECULACIÓN (CHOLLO)", "ganancia_5d": "+125.000 €",
+        "name": "Andrés García", "position": "DEF", "pos": "DEF", "team": "Levante UD", "value": 2083000, "val": 2083000,
+        "trend": "+25.000 €", "points": 0, "pts": 0, "media": 3.6, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 ESPECULACIÓN (CHOLLO)", "ganancia_5d": "+125.000 €",
         "motivo": "Defensa polivalente con subida garantizada por titularidad en banda.",
         "momento_venta": "Vender cuando supere los 2.2M€"
     },
     {
-        "name": "Pablo Campos", "position": "POR", "team": "Levante UD", "value": 1436000, "trend": "+10.000 €",
-        "points": 0, "media": 4.2, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "🧤 FICHAJE PORTERÍA", "ganancia_5d": "+50.000 €",
+        "name": "Pablo Campos", "position": "POR", "pos": "POR", "team": "Levante UD", "value": 1436000, "val": 1436000,
+        "trend": "+10.000 €", "points": 0, "pts": 0, "media": 4.2, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "🧤 FICHAJE PORTERÍA", "ganancia_5d": "+50.000 €",
         "motivo": "Portero titular idóneo para sustituir tu parche de portería.",
         "momento_venta": "Mantener de titular en tu 11"
     },
     {
-        "name": "Joaquín Muñoz", "position": "MED", "team": "SD Huesca", "value": 1539000, "trend": "+20.000 €",
-        "points": 0, "media": 3.5, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 ESPECULACIÓN", "ganancia_5d": "+100.000 €",
+        "name": "Joaquín Muñoz", "position": "MED", "pos": "MED", "team": "SD Huesca", "value": 1539000, "val": 1539000,
+        "trend": "+20.000 €", "points": 0, "pts": 0, "media": 3.5, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 ESPECULACIÓN", "ganancia_5d": "+100.000 €",
         "motivo": "Bajo coste y subida estable.",
         "momento_venta": "Vender en 5 días"
     },
     {
-        "name": "Jeremy Toljan", "position": "DEF", "team": "UD Las Palmas", "value": 1496000, "trend": "+15.000 €",
-        "points": 0, "media": 3.4, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 ESPECULACIÓN", "ganancia_5d": "+75.000 €",
+        "name": "Jeremy Toljan", "position": "DEF", "pos": "DEF", "team": "UD Las Palmas", "value": 1496000, "val": 1496000,
+        "trend": "+15.000 €", "points": 0, "pts": 0, "media": 3.4, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 ESPECULACIÓN", "ganancia_5d": "+75.000 €",
         "motivo": "Lateral con subida moderada.",
         "momento_venta": "Vender en 3 días"
     },
     {
-        "name": "Héctor Fort", "position": "DEF", "team": "FC Barcelona", "value": 1106000, "trend": "+15.000 €",
-        "points": 0, "media": 3.2, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 ESPECULACIÓN", "ganancia_5d": "+75.000 €",
+        "name": "Héctor Fort", "position": "DEF", "pos": "DEF", "team": "FC Barcelona", "value": 1106000, "val": 1106000,
+        "trend": "+15.000 €", "points": 0, "pts": 0, "media": 3.2, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 ESPECULACIÓN", "ganancia_5d": "+75.000 €",
         "motivo": "Canterano culé con minutos en rotación.",
         "momento_venta": "Vender tras 4 días"
     },
     {
-        "name": "Fede Redondo", "position": "MED", "team": "Elche CF", "value": 382000, "trend": "+5.000 €",
-        "points": 0, "media": 3.0, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 CHOLLO DE COSTE MÍNIMO", "ganancia_5d": "+25.000 €",
+        "name": "Fede Redondo", "position": "MED", "pos": "MED", "team": "Elche CF", "value": 382000, "val": 382000,
+        "trend": "+5.000 €", "points": 0, "pts": 0, "media": 3.0, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 CHOLLO DE COSTE MÍNIMO", "ganancia_5d": "+25.000 €",
         "motivo": "Precio de derribo para especular sin compromiso.",
         "momento_venta": "Vender cuando deje de subir"
     },
     {
-        "name": "Youssef Enríquez", "position": "DEF", "team": "Real Madrid", "value": 366000, "trend": "+5.000 €",
-        "points": 0, "media": 2.5, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "📈 CHOLLO DE COSTE MÍNIMO", "ganancia_5d": "+25.000 €",
+        "name": "Youssef Enríquez", "position": "DEF", "pos": "DEF", "team": "Real Madrid", "value": 366000, "val": 366000,
+        "trend": "+5.000 €", "points": 0, "pts": 0, "media": 2.5, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "📈 CHOLLO DE COSTE MÍNIMO", "ganancia_5d": "+25.000 €",
         "motivo": "Inversión mínima para rentabilidad porcentual.",
         "momento_venta": "Vender en 3 días"
     },
     {
-        "name": "Germán Parreño", "position": "POR", "team": "Deportivo", "value": 245000, "trend": "+0 €",
-        "points": 0, "media": 3.5, "season": "25/26", "owner": "Mercado Oficial", "tipo_vendedor": "Libre (Mercado)",
-        "tipo_op": "🧤 PARCHE ECONÓMICO", "ganancia_5d": "+0 €",
+        "name": "Germán Parreño", "position": "POR", "pos": "POR", "team": "Deportivo", "value": 245000, "val": 245000,
+        "trend": "+0 €", "points": 0, "pts": 0, "media": 3.5, "season": "25/26", "owner": "Mercado Oficial",
+        "tipo_vendedor": "Libre (Mercado)", "tipo_op": "🧤 PARCHE ECONÓMICO", "ganancia_5d": "+0 €",
         "motivo": "Portero a precio base para ahorrar presupuesto.",
         "momento_venta": "Mantener como suplente"
     },
     # Jugadores en Venta por Rivales de la Liga
     {
-        "name": "Ramon Terrats", "position": "MED", "team": "Getafe CF", "value": 2100000, "trend": "+10.000 €",
-        "points": 0, "media": 3.8, "season": "25/26", "owner": "ima", "tipo_vendedor": "Rival: ima",
-        "tipo_op": "🤝 COMPRA A RIVAL", "ganancia_5d": "+50.000 €",
-        "motivo": "Puesto en venta por ima por necesidad de liquidez.",
-        "momento_venta": "Negociar por el valor de mercado"
+        "name": "Ramon Terrats", "position": "MED", "pos": "MED", "team": "Getafe CF", "value": 2100000, "val": 2100000,
+        "trend": "+10.000 €", "points": 0, "pts": 0, "media": 3.8, "season": "25/26", "owner": "ima",
+        "tipo_vendedor": "Rival: ima", "tipo_op": "🤝 COMPRA A RIVAL", "ganancia_5d": "+50.000 €",
+        "motivo": "Puesto en venta por ima por necesidad de liquidez.", "momento_venta": "Negociar por el valor de mercado"
     },
     {
-        "name": "Kike Salas", "position": "DEF", "team": "Sevilla FC", "value": 1800000, "trend": "+15.000 €",
-        "points": 0, "media": 3.6, "season": "25/26", "owner": "oct", "tipo_vendedor": "Rival: oct",
-        "tipo_op": "🤝 COMPRA A RIVAL", "ganancia_5d": "+75.000 €",
-        "motivo": "Defensa transferible por oct.",
-        "momento_venta": "Negociar"
+        "name": "Kike Salas", "position": "DEF", "pos": "DEF", "team": "Sevilla FC", "value": 1800000, "val": 1800000,
+        "trend": "+15.000 €", "points": 0, "pts": 0, "media": 3.6, "season": "25/26", "owner": "oct",
+        "tipo_vendedor": "Rival: oct", "tipo_op": "🤝 COMPRA A RIVAL", "ganancia_5d": "+75.000 €",
+        "motivo": "Defensa transferible por oct.", "momento_venta": "Negociar"
     },
     {
-        "name": "Unai Núñez", "position": "DEF", "team": "RC Celta", "value": 1600000, "trend": "+5.000 €",
-        "points": 0, "media": 3.2, "season": "25/26", "owner": "prosinecki", "tipo_vendedor": "Rival: prosinecki",
-        "tipo_op": "🤝 COMPRA A RIVAL", "ganancia_5d": "+25.000 €",
-        "motivo": "Puesto en venta por prosinecki.",
-        "momento_venta": "Parche defensivo"
+        "name": "Unai Núñez", "position": "DEF", "pos": "DEF", "team": "RC Celta", "value": 1600000, "val": 1600000,
+        "trend": "+5.000 €", "points": 0, "pts": 0, "media": 3.2, "season": "25/26", "owner": "prosinecki",
+        "tipo_vendedor": "Rival: prosinecki", "tipo_op": "🤝 COMPRA A RIVAL", "ganancia_5d": "+25.000 €",
+        "motivo": "Puesto en venta por prosinecki.", "momento_venta": "Parche defensivo"
     },
     {
-        "name": "Renato Veiga", "position": "DEF", "team": "Chelsea", "value": 1200000, "trend": "-40.000 €",
-        "points": 0, "media": 3.0, "season": "25/26", "owner": "paurra-20", "tipo_vendedor": "Rival: paurra-20",
-        "tipo_op": "📉 A LA BAJA (EVITAR)", "ganancia_5d": "-200.000 €",
-        "motivo": "Perdiendo valor diariamente. paurra-20 intenta deshacerse de él.",
-        "momento_venta": "No comprar"
+        "name": "Renato Veiga", "position": "DEF", "pos": "DEF", "team": "Chelsea", "value": 1200000, "val": 1200000,
+        "trend": "-40.000 €", "points": 0, "pts": 0, "media": 3.0, "season": "25/26", "owner": "paurra-20",
+        "tipo_vendedor": "Rival: paurra-20", "tipo_op": "📉 A LA BAJA (EVITAR)", "ganancia_5d": "-200.000 €",
+        "motivo": "Perdiendo valor diariamente. paurra-20 intenta deshacerse de él.", "momento_venta": "No comprar"
     }
 ]
 
 # JUGADORES A LA BAJA (ALERTA DE DEVALUACIÓN)
 PLAYERS_FALLING = [
-    {"name": "Joao Félix", "team": "Chelsea / Selec.", "position": "DEL", "value": 12400000, "trend": "-210.000 €", "motivo": "Sin minutos fijos y alta rotación en su club. Caída fuerte en picado."},
-    {"name": "Memphis Depay", "team": "Atlético", "position": "DEL", "value": 8900000, "trend": "-180.000 €", "motivo": "Problemas físicos recurrentes y devaluación diaria continuada."},
-    {"name": "Nabil Fekir", "team": "Real Betis", "position": "MED", "value": 6500000, "trend": "-120.000 €", "motivo": "Rumores de traspaso y pérdida de jerarquía."},
-    {"name": "Luiz Henrique", "team": "Real Betis", "position": "DEL", "value": 4100000, "trend": "-90.000 €", "motivo": "Pérdida de titularidad en banda."},
-    {"name": "Renato Veiga", "team": "Chelsea", "position": "DEF", "value": 1200000, "trend": "-40.000 €", "motivo": "Puesto en venta por paurra-20, perdiendo valor."}
+    {"name": "Joao Félix", "team": "Chelsea / Selec.", "position": "DEL", "pos": "DEL", "value": 12400000, "val": 12400000, "trend": "-210.000 €", "motivo": "Sin minutos fijos y alta rotación en su club. Caída fuerte en picado."},
+    {"name": "Memphis Depay", "team": "Atlético", "position": "DEL", "pos": "DEL", "value": 8900000, "val": 8900000, "trend": "-180.000 €", "motivo": "Problemas físicos recurrentes y devaluación diaria continuada."},
+    {"name": "Nabil Fekir", "team": "Real Betis", "position": "MED", "pos": "MED", "value": 6500000, "val": 6500000, "trend": "-120.000 €", "motivo": "Rumores de traspaso y pérdida de jerarquía."},
+    {"name": "Luiz Henrique", "team": "Real Betis", "position": "DEL", "pos": "DEL", "value": 4100000, "val": 4100000, "trend": "-90.000 €", "motivo": "Pérdida de titularidad en banda."},
+    {"name": "Renato Veiga", "team": "Chelsea", "position": "DEF", "pos": "DEF", "value": 1200000, "val": 1200000, "trend": "-40.000 €", "motivo": "Puesto en venta por paurra-20, perdiendo valor."}
 ]
 
 REAL_SALDO = 1800000
@@ -554,9 +680,9 @@ st.markdown("""
 
 # Bulletproof Session State Initialization with Real Live Data
 if "current_squad" not in st.session_state or not st.session_state.current_squad:
-    st.session_state.current_squad = REAL_SQUAD
+    st.session_state.current_squad = [normalize_player_dict(p) for p in REAL_SQUAD]
 if "current_market" not in st.session_state or not st.session_state.current_market:
-    st.session_state.current_market = REAL_MARKET
+    st.session_state.current_market = [normalize_player_dict(p) for p in REAL_MARKET]
 if "current_saldo" not in st.session_state:
     st.session_state.current_saldo = REAL_SALDO
 if "report_data" not in st.session_state or not st.session_state.report_data:
@@ -617,14 +743,14 @@ with st.sidebar:
                         database.set_setting("jwt_token", mister_token)
                         database.set_setting("mister_token", mister_token)
                         
-                    st.session_state.current_squad = sync_res["squad"]
+                    st.session_state.current_squad = [normalize_player_dict(p) for p in sync_res["squad"]]
                     st.session_state.current_saldo = sync_res["saldo"]
                     st.success(f"✅ Sincronizado en tiempo real con Token JWT ({sync_res.get('community_name', 'Mister')})")
                     
                     try:
                         client = mister_analyzer.get_gemini_client(api_key)
                         report = mister_analyzer.analyze_structured_data(
-                            client, sync_res["squad"], REAL_MARKET, sync_res["saldo"], user_notes
+                            client, st.session_state.current_squad, REAL_MARKET, sync_res["saldo"], user_notes
                         )
                         st.session_state.report_data = report
                         st.rerun()
@@ -646,7 +772,7 @@ st.markdown("""
 if st.session_state.current_squad:
     squad = st.session_state.current_squad
     saldo = st.session_state.current_saldo
-    total_val = sum(p.get("value", 0) for p in squad)
+    total_val = sum(p.get("value", p.get("val", 0)) for p in squad)
     max_debt_margin = total_val * 0.25
     max_buying_power = saldo + max_debt_margin
     avg_team_media = sum(p.get("media", 3.5) for p in squad) / len(squad) if squad else 0.0
@@ -685,14 +811,15 @@ if st.session_state.current_squad:
 
 
 def build_player_card_html(p):
-    pos_cls = f"pos-{p.get('position', 'MED').lower()}"
+    pos_str = p.get('position', p.get('pos', 'MED'))
+    pos_cls = f"pos-{pos_str.lower()}"
     prob_str = p.get("prob_titular", "85%")
     status_titular = p.get("status_titular", "Titular")
     
     prob_val = int(prob_str.replace('%', '')) if '%' in prob_str else 80
     badge_cls = "badge-titular-conf" if prob_val >= 85 else ("badge-titular-prob" if prob_val >= 70 else "badge-titular-duda")
     
-    val_fmt = fmt_eur(p.get('value', 0))
+    val_fmt = fmt_eur(p.get('value', p.get('val', 0)))
     media_val = p.get('media', 0.0)
     season_str = p.get('season', '25/26')
     media_display = f"{media_val} media ({season_str})" if media_val > 0 else "Debutante"
@@ -702,8 +829,8 @@ def build_player_card_html(p):
     
     return f"""
     <div class="mister-player-card">
-        <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
-        <div class="card-name">{p['name']}</div>
+        <span class="pos-pill {pos_cls}">{pos_str}</span>
+        <div class="card-name">{p.get('name', 'Futbolista')}</div>
         <div class="card-meta">⭐ {media_display} &nbsp;|&nbsp; 💰 {val_fmt}</div>
         <div style="font-size:0.7rem; color:{trend_color}; font-weight:700; margin-top:2px;">{trend} / día</div>
         <div class="{badge_cls}">🟢 {prob_str} {status_titular}</div>
@@ -738,13 +865,13 @@ if st.session_state.report_data:
         st.subheader("👕 Terreno de Juego Táctico Oficial & Alineación 3-5-2")
         
         if st.session_state.current_squad:
-            squad = st.session_state.current_squad
+            squad = [normalize_player_dict(p) for p in st.session_state.current_squad]
             
             starters = squad
-            del_s = [p for p in starters if p.get("position") == "DEL"]
-            med_s = [p for p in starters if p.get("position") == "MED"]
-            def_s = [p for p in starters if p.get("position") == "DEF"]
-            por_s = [p for p in starters if p.get("position") == "POR"]
+            del_s = [p for p in starters if p.get("position", p.get("pos")) == "DEL"]
+            med_s = [p for p in starters if p.get("position", p.get("pos")) == "MED"]
+            def_s = [p for p in starters if p.get("position", p.get("pos")) == "DEF"]
+            por_s = [p for p in starters if p.get("position", p.get("pos")) == "POR"]
             
             del_cards = "".join([build_player_card_html(p) for p in del_s]) or "<div style='color:#9ca3af;'>Sin delanteros</div>"
             med_cards = "".join([build_player_card_html(p) for p in med_s]) or "<div style='color:#9ca3af;'>Sin centrocampistas</div>"
@@ -781,38 +908,45 @@ if st.session_state.report_data:
             st.markdown("### 🔍 Ficha Extendida & Gráficas de Evolución del Futbolista")
             st.caption("Selecciona cualquier jugador para abrir su informe detallado idéntico a la app oficial de Mister Fantasy:")
             
-            squad_names = [p["name"] for p in squad]
+            squad_names = [p.get("name", "Futbolista") for p in squad]
             selected_player = st.selectbox("Selecciona un futbolista de tu 11 para ver su ficha completa:", squad_names)
             
-            p_obj = next((p for p in squad if p["name"] == selected_player), None)
+            p_obj = next((p for p in squad if p.get("name") == selected_player), None)
             if p_obj:
                 with st.container():
-                    st.markdown(f"#### 👤 {p_obj['name']} ({p_obj['position']} - {p_obj['team']})")
+                    p_name = p_obj.get('name', 'Futbolista')
+                    p_pos = p_obj.get('position', p_obj.get('pos', 'MED'))
+                    p_team = p_obj.get('team', 'LaLiga')
+                    p_val = p_obj.get('value', p_obj.get('val', 1000000))
+                    
+                    st.markdown(f"#### 👤 {p_name} ({p_pos} - {p_team})")
                     
                     mc1, mc2, mc3, mc4, mc5 = st.columns(5)
                     with mc1:
-                        st.metric("💰 Valor de Mercado", fmt_eur(p_obj['value']), p_obj.get('trend', '+0 €'))
+                        st.metric("💰 Valor de Mercado", fmt_eur(p_val), p_obj.get('trend', '+0 €'))
                     with mc2:
-                        clausula_val = p_obj.get('clausula', int(p_obj['value'] * 1.5))
+                        clausula_val = p_obj.get('clausula', int(p_val * 1.5))
                         st.metric("🔒 Cláusula", fmt_eur(clausula_val))
                     with mc3:
                         st.metric("⭐ Media Temporada", f"{p_obj.get('media', 0.0)} pts", p_obj.get('season', '25/26'))
                     with mc4:
-                        st.metric("⚽ Puntos Totales", f"{p_obj.get('points', 0)} pts")
+                        st.metric("⚽ Puntos Totales", f"{p_obj.get('points', p_obj.get('pts', 0))} pts")
                     with mc5:
                         st.metric("🟢 Titularidad", p_obj.get('prob_titular', '85%'), p_obj.get('fitness', 'Disponible'))
                         
                     # Stats Row
+                    p_buy = p_obj.get('precio_compra', p_val)
+                    p_plus = max(0, p_val - p_buy)
                     st.markdown(f"""
                     - **Próximo Partido**: `{p_obj.get('proximo_partido', 'LaLiga EA Sports')}`
                     - **Rendimiento**: Media Casa: **`{p_obj.get('media_casa', 4.5)} pts`** | Media Fuera: **`{p_obj.get('media_fuera', 4.0)} pts`**
                     - **Disciplina**: **`{p_obj.get('tarjetas', '0/5 Amarillas')}`** | **`{p_obj.get('rojas', '0 Rojas')}`**
-                    - **Precio de Compra**: **`{fmt_eur(p_obj.get('precio_compra', p_obj['value']))}`** (Plusvalía acumulada: **`+{fmt_eur(max(0, p_obj['value'] - p_obj.get('precio_compra', p_obj['value'])))}`**)
+                    - **Precio de Compra**: **`{fmt_eur(p_buy)}`** (Plusvalía acumulada: **`+{fmt_eur(p_plus)}`**)
                     """)
                     
                     # Interactive Historical Price Curve
                     st.markdown("##### 📈 Gráfica de Evolución de Valor de Mercado (Últimos 14 días):")
-                    df_p_history = generate_price_history(p_obj['value'], p_obj.get('trend', '+10.000 €'))
+                    df_p_history = generate_price_history(p_val, p_obj.get('trend', '+10.000 €'))
                     st.line_chart(df_p_history, color="#10b981")
                     
                     # Historical Seasons Table
@@ -837,20 +971,20 @@ if st.session_state.report_data:
             filter_sort = st.selectbox("Ordenar por:", ["Mayor Valor", "Mayor Subida Diaria", "Menor Precio"])
             
         # Apply Filters
-        filtered_market = list(REAL_MARKET)
+        filtered_market = [normalize_player_dict(p) for p in REAL_MARKET]
         if filter_pos != "Todas":
-            filtered_market = [p for p in filtered_market if p.get("position") == filter_pos]
+            filtered_market = [p for p in filtered_market if p.get("position", p.get("pos")) == filter_pos]
         if filter_seller == "Libres (Mercado Oficial)":
             filtered_market = [p for p in filtered_market if "Libre" in p.get("tipo_vendedor", "")]
         elif filter_seller == "Puestos a la Venta por Rivales":
             filtered_market = [p for p in filtered_market if "Rival" in p.get("tipo_vendedor", "")]
             
         if filter_sort == "Mayor Valor":
-            filtered_market.sort(key=lambda x: x.get("value", 0), reverse=True)
+            filtered_market.sort(key=lambda x: x.get("value", x.get("val", 0)), reverse=True)
         elif filter_sort == "Mayor Subida Diaria":
-            filtered_market.sort(key=lambda x: int(re.sub(r'[^\d-]', '', x.get("trend", "0")) or 0), reverse=True)
+            filtered_market.sort(key=lambda x: int(re.sub(r'[^\d-]', '', str(x.get("trend", "0"))) or 0), reverse=True)
         elif filter_sort == "Menor Precio":
-            filtered_market.sort(key=lambda x: x.get("value", 0))
+            filtered_market.sort(key=lambda x: x.get("value", x.get("val", 0)))
             
         # Render Market Cards with Seller Badges
         st.markdown(f"##### 🎯 Futbolistas Disponibles ({len(filtered_market)} encontrados):")
@@ -858,12 +992,14 @@ if st.session_state.report_data:
         for p in filtered_market:
             seller_badge = "🟢 LIBRE (MERCADO)" if "Libre" in p.get("tipo_vendedor", "") else f"👤 VENDEDOR: {p.get('owner', 'Rival')}"
             seller_color = "#10b981" if "Libre" in p.get("tipo_vendedor", "") else "#f59e0b"
+            p_pos = p.get('position', p.get('pos', 'MED'))
+            p_val = p.get('value', p.get('val', 0))
             
             card_item = f"""
             <div class="mister-player-card" style="border: 1px solid {seller_color};">
-                <span class="pos-pill pos-{p.get('position', 'MED').lower()}">{p.get('position', 'MED')}</span>
-                <div class="card-name">{p['name']}</div>
-                <div class="card-meta">⭐ {p.get('media', 3.5)} media &nbsp;|&nbsp; 💰 {fmt_eur(p.get('value', 0))}</div>
+                <span class="pos-pill pos-{p_pos.lower()}">{p_pos}</span>
+                <div class="card-name">{p.get('name', 'Futbolista')}</div>
+                <div class="card-meta">⭐ {p.get('media', 3.5)} media &nbsp;|&nbsp; 💰 {fmt_eur(p_val)}</div>
                 <div style="font-size:0.7rem; color:#10b981; font-weight:700; margin-top:2px;">{p.get('trend', '+0 €')} / día</div>
                 <div style="background:rgba(255,255,255,0.08); color:{seller_color}; font-size:0.65rem; padding:2px 4px; border-radius:4px; margin-top:4px; font-weight:800;">{seller_badge}</div>
             </div>
@@ -885,7 +1021,7 @@ if st.session_state.report_data:
         
         # 1. Chollos al Alza
         st.markdown("#### 🚀 1. Chollos del Mercado al Alza (Para Generar Plusvalías):")
-        df_spec_up = pd.DataFrame([p for p in REAL_MARKET if '+' in p.get('trend', '+')])
+        df_spec_up = pd.DataFrame([normalize_player_dict(p) for p in REAL_MARKET if '+' in str(p.get('trend', '+'))])
         st.dataframe(
             df_spec_up[["name", "position", "value", "trend", "tipo_op", "ganancia_5d", "motivo", "momento_venta"]],
             column_config={
@@ -928,11 +1064,12 @@ if st.session_state.report_data:
         
         col_b1, col_b2 = st.columns([2, 1])
         with col_b1:
-            market_player_names = [p["name"] for p in REAL_MARKET]
+            market_player_names = [p.get("name", "Futbolista") for p in REAL_MARKET]
             target_bid_player = st.selectbox("Jugador por el que vas a pujar:", market_player_names)
-            chosen_p = next((p for p in REAL_MARKET if p["name"] == target_bid_player), None)
+            chosen_p = next((p for p in REAL_MARKET if p.get("name") == target_bid_player), None)
             
-            default_bid = chosen_p['value'] + 50000 if chosen_p else 1500000
+            p_val_bid = chosen_p.get('value', chosen_p.get('val', 1500000)) if chosen_p else 1500000
+            default_bid = p_val_bid + 50000
             user_bid_input = st.number_input("Tu Oferta de Puja (€):", value=int(default_bid), step=50000)
             
         with col_b2:
