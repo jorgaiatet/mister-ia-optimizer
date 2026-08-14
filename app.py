@@ -75,8 +75,24 @@ def normalize_player_dict(p):
         "proximo_partido": p.get("proximo_partido", "LaLiga EA Sports"),
         "precio_compra": p.get("precio_compra", val),
         "historial_temporadas": p.get("historial_temporadas", [{"temp": "25/26", "media": 3.5, "pts": 0}]),
-        "status": p.get("status", "Titular")
+        "status": p.get("status", "Titular"),
+        "owner": p.get("owner", "Mercado Oficial"),
+        "tipo_vendedor": p.get("tipo_vendedor", "Libre (Mercado)"),
+        "tipo_op": p.get("tipo_op", "Especulación"),
+        "ganancia_5d": p.get("ganancia_5d", "+100.000 €"),
+        "motivo": p.get("motivo", "Subida de valor"),
+        "momento_venta": p.get("momento_venta", "Vender en 3-5 días")
     }
+
+# Safe DataFrame helper to prevent any KeyError in Pandas
+def safe_dataframe(records, column_defaults):
+    clean_records = []
+    for r in records:
+        clean_r = {}
+        for col, default_val in column_defaults.items():
+            clean_r[col] = r.get(col, default_val)
+        clean_records.append(clean_r)
+    return pd.DataFrame(clean_records)
 
 # 100% SELF-CONTAINED REAL SQUAD DATABASE
 REAL_SQUAD = [
@@ -770,9 +786,9 @@ st.markdown("""
 
 # Top Metrics Bar
 if st.session_state.current_squad:
-    squad = st.session_state.current_squad
+    squad = [normalize_player_dict(p) for p in st.session_state.current_squad]
     saldo = st.session_state.current_saldo
-    total_val = sum(p.get("value", p.get("val", 0)) for p in squad)
+    total_val = sum(p.get("value", 0) for p in squad)
     max_debt_margin = total_val * 0.25
     max_buying_power = saldo + max_debt_margin
     avg_team_media = sum(p.get("media", 3.5) for p in squad) / len(squad) if squad else 0.0
@@ -827,15 +843,8 @@ def build_player_card_html(p):
     trend = p.get('trend', '+10.000 €')
     trend_color = '#10b981' if '+' in trend else '#ef4444'
     
-    return f"""
-    <div class="mister-player-card">
-        <span class="pos-pill {pos_cls}">{pos_str}</span>
-        <div class="card-name">{p.get('name', 'Futbolista')}</div>
-        <div class="card-meta">⭐ {media_display} &nbsp;|&nbsp; 💰 {val_fmt}</div>
-        <div style="font-size:0.7rem; color:{trend_color}; font-weight:700; margin-top:2px;">{trend} / día</div>
-        <div class="{badge_cls}">🟢 {prob_str} {status_titular}</div>
-    </div>
-    """
+    card_html = f"""<div class="mister-player-card"><span class="pos-pill {pos_cls}">{pos_str}</span><div class="card-name">{p.get('name', 'Futbolista')}</div><div class="card-meta">⭐ {media_display} &nbsp;|&nbsp; 💰 {val_fmt}</div><div style="font-size:0.7rem; color:{trend_color}; font-weight:700; margin-top:2px;">{trend} / día</div><div class="{badge_cls}">🟢 {prob_str} {status_titular}</div></div>"""
+    return card_html
 
 # Helper function for generating realistic 14-day price curves
 def generate_price_history(current_val, trend_str):
@@ -878,30 +887,8 @@ if st.session_state.report_data:
             def_cards = "".join([build_player_card_html(p) for p in def_s]) or "<div style='color:#9ca3af;'>Sin defensas</div>"
             por_cards = "".join([build_player_card_html(p) for p in por_s]) or "<div style='color:#9ca3af;'>Sin portero</div>"
             
-            # Single Flexbox Field Render
-            pitch_html = f"""
-            <div class="tactical-pitch-field">
-                <div class="pitch-zone">
-                    <div class="pitch-zone-title" style="color:#ef4444;">DELANTEROS TITULARES ({len(del_s)})</div>
-                    <div class="pitch-flex-row">{del_cards}</div>
-                </div>
-                <div class="pitch-zone-divider"></div>
-                <div class="pitch-zone">
-                    <div class="pitch-zone-title" style="color:#10b981;">CENTROCAMPISTAS TITULARES ({len(med_s)})</div>
-                    <div class="pitch-flex-row">{med_cards}</div>
-                </div>
-                <div class="pitch-zone-divider"></div>
-                <div class="pitch-zone">
-                    <div class="pitch-zone-title" style="color:#3b82f6;">DEFENSAS TITULARES ({len(def_s)})</div>
-                    <div class="pitch-flex-row">{def_cards}</div>
-                </div>
-                <div class="pitch-zone-divider"></div>
-                <div class="pitch-zone">
-                    <div class="pitch-zone-title" style="color:#f59e0b;">PORTERO TITULAR ({len(por_s)})</div>
-                    <div class="pitch-flex-row">{por_cards}</div>
-                </div>
-            </div>
-            """
+            # Single Flexbox Field Render (Single Line to prevent markdown parser breaks)
+            pitch_html = f"""<div class="tactical-pitch-field"><div class="pitch-zone"><div class="pitch-zone-title" style="color:#ef4444;">DELANTEROS TITULARES ({len(del_s)})</div><div class="pitch-flex-row">{del_cards}</div></div><div class="pitch-zone-divider"></div><div class="pitch-zone"><div class="pitch-zone-title" style="color:#10b981;">CENTROCAMPISTAS TITULARES ({len(med_s)})</div><div class="pitch-flex-row">{med_cards}</div></div><div class="pitch-zone-divider"></div><div class="pitch-zone"><div class="pitch-zone-title" style="color:#3b82f6;">DEFENSAS TITULARES ({len(def_s)})</div><div class="pitch-flex-row">{def_cards}</div></div><div class="pitch-zone-divider"></div><div class="pitch-zone"><div class="pitch-zone-title" style="color:#f59e0b;">PORTERO TITULAR ({len(por_s)})</div><div class="pitch-flex-row">{por_cards}</div></div></div>"""
             st.markdown(pitch_html, unsafe_allow_html=True)
             
             # Detailed Player Modal / Extended Card View
@@ -995,22 +982,10 @@ if st.session_state.report_data:
             p_pos = p.get('position', p.get('pos', 'MED'))
             p_val = p.get('value', p.get('val', 0))
             
-            card_item = f"""
-            <div class="mister-player-card" style="border: 1px solid {seller_color};">
-                <span class="pos-pill pos-{p_pos.lower()}">{p_pos}</span>
-                <div class="card-name">{p.get('name', 'Futbolista')}</div>
-                <div class="card-meta">⭐ {p.get('media', 3.5)} media &nbsp;|&nbsp; 💰 {fmt_eur(p_val)}</div>
-                <div style="font-size:0.7rem; color:#10b981; font-weight:700; margin-top:2px;">{p.get('trend', '+0 €')} / día</div>
-                <div style="background:rgba(255,255,255,0.08); color:{seller_color}; font-size:0.65rem; padding:2px 4px; border-radius:4px; margin-top:4px; font-weight:800;">{seller_badge}</div>
-            </div>
-            """
+            card_item = f"""<div class="mister-player-card" style="border: 1px solid {seller_color};"><span class="pos-pill pos-{p_pos.lower()}">{p_pos}</span><div class="card-name">{p.get('name', 'Futbolista')}</div><div class="card-meta">⭐ {p.get('media', 3.5)} media &nbsp;|&nbsp; 💰 {fmt_eur(p_val)}</div><div style="font-size:0.7rem; color:#10b981; font-weight:700; margin-top:2px;">{p.get('trend', '+0 €')} / día</div><div style="background:rgba(255,255,255,0.08); color:{seller_color}; font-size:0.65rem; padding:2px 4px; border-radius:4px; margin-top:4px; font-weight:800;">{seller_badge}</div></div>"""
             m_cards.append(card_item)
             
-        st.markdown(f"""
-        <div class="pitch-flex-row" style="justify-content:flex-start; margin-bottom:20px; overflow-x:auto;">
-            {''.join(m_cards)}
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div class="pitch-flex-row" style="justify-content:flex-start; margin-bottom:20px; overflow-x:auto;">{''.join(m_cards)}</div>""", unsafe_allow_html=True)
             
         st.markdown(st.session_state.report_data.get("mercado", ""))
         
@@ -1019,9 +994,14 @@ if st.session_state.report_data:
         st.subheader("💰 Trading & Especulación (Chollos al Alza & Alertas a la Baja)")
         st.caption("Algoritmo IA para comprar barato hoy, generar plusvalías diarias y vender a los pocos días con beneficio neto (respetando las 24h mínimas).")
         
-        # 1. Chollos al Alza
+        # 1. Chollos al Alza (Safe DataFrame Definition)
         st.markdown("#### 🚀 1. Chollos del Mercado al Alza (Para Generar Plusvalías):")
-        df_spec_up = pd.DataFrame([normalize_player_dict(p) for p in REAL_MARKET if '+' in str(p.get('trend', '+'))])
+        spec_up_items = [normalize_player_dict(p) for p in REAL_MARKET if '+' in str(p.get('trend', '+'))]
+        col_spec_up = {
+            "name": "Desconocido", "position": "MED", "value": 0, "trend": "+0 €",
+            "tipo_op": "Especulación", "ganancia_5d": "+0 €", "motivo": "Subida", "momento_venta": "Vender en 3-5 días"
+        }
+        df_spec_up = safe_dataframe(spec_up_items, col_spec_up)
         st.dataframe(
             df_spec_up[["name", "position", "value", "trend", "tipo_op", "ganancia_5d", "motivo", "momento_venta"]],
             column_config={
@@ -1038,9 +1018,12 @@ if st.session_state.report_data:
             use_container_width=True
         )
         
-        # 2. Alertas a la Baja
+        # 2. Alertas a la Baja (Safe DataFrame Definition)
         st.markdown("#### 📉 2. Alertas de Jugadores a la Baja (Vender Inmediatamente):")
-        df_spec_down = pd.DataFrame(PLAYERS_FALLING)
+        col_spec_down = {
+            "name": "Desconocido", "team": "LaLiga", "position": "MED", "value": 0, "trend": "-0 €", "motivo": "Devaluación"
+        }
+        df_spec_down = safe_dataframe(PLAYERS_FALLING, col_spec_down)
         st.dataframe(
             df_spec_down[["name", "team", "position", "value", "trend", "motivo"]],
             column_config={
@@ -1109,7 +1092,12 @@ if st.session_state.report_data:
         st.subheader("🕵️‍♂️ Inteligencia Contable & Capacidad de Puja de los 10 Mánagers Reales")
         st.caption("Contabilidad calculada desde el saldo inicial de 60.000.000 € y el margen del 25% de deuda sobre plantilla.")
         
-        df_rivals = pd.DataFrame(COMMUNITY_RIVALS)
+        col_rivals = {
+            "pos": 1, "name": "Mánager", "patrimonio_neto": 50000000, "value": 45000000, "saldo_est": 1000000,
+            "margen_deuda_25": 11250000, "max_puja_posible": 12250000, "players_count": 11,
+            "necesidad_mercado": "Equilibrar", "en_venta": "Ninguno", "puntos_debiles": "Ninguno"
+        }
+        df_rivals = safe_dataframe(COMMUNITY_RIVALS, col_rivals)
         st.dataframe(
             df_rivals[["pos", "name", "patrimonio_neto", "value", "saldo_est", "margen_deuda_25", "max_puja_posible", "players_count", "necesidad_mercado", "en_venta", "puntos_debiles"]],
             column_config={
