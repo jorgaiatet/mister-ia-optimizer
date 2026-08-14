@@ -28,6 +28,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# PERMANENT FALLBACK JWT TOKEN
+PERMANENT_JWT_TOKEN = "eyJhbGciOiJFUzI1NiJ9.eyJleHAiOiIxNzg2NzIyODUzIiwidXNlcmlkIjoiMjk0Nzk4MiIsImFsZyI6IkVTMjU2In0.IA04fQXwxyXRc_QhVJU0MCmMwQ5hHCFRmOzd5-MZS3YaV8NhO0hGl4ZU7yeBfdmXAaRVEMxiX7Ps3seZ1k0FPA"
+
 # Helper function to format currency in Spanish standard (dots for thousands and millions)
 def fmt_eur(val):
     try:
@@ -565,8 +568,7 @@ if "bid_result" not in st.session_state:
 
 # Sidebar Setup
 with st.sidebar:
-    st.image("https://cdn-mister.mundodeportivo.com/file/cdn-common/logos/mister-md.png", width=180)
-    st.title("⚽ Mister IA Pro")
+    st.markdown("## ⚽ Mister IA Pro")
     st.caption("Asistente Táctico & Financiero Mister Fantasy")
     
     api_key_env = os.environ.get("GEMINI_API_KEY", "")
@@ -588,7 +590,7 @@ with st.sidebar:
     st.divider()
     
     st.subheader("⚙️ Conexión Mister Fantasy")
-    saved_token = database.get_setting("jwt_token", database.JWT_PERMANENT_TOKEN)
+    saved_token = database.get_setting("jwt_token", PERMANENT_JWT_TOKEN) if hasattr(database, 'get_setting') else PERMANENT_JWT_TOKEN
     mister_token = st.text_input("Token JWT Permanente de Mister:", value=saved_token, type="password", help="Tu clave de sesión permanente de Mister Fantasy.")
     
     user_notes = st.text_area(
@@ -611,8 +613,9 @@ with st.sidebar:
                 if not sync_res["success"]:
                     st.error(f"{sync_res.get('error')}")
                 else:
-                    database.set_setting("jwt_token", mister_token)
-                    database.set_setting("mister_token", mister_token)
+                    if hasattr(database, 'set_setting'):
+                        database.set_setting("jwt_token", mister_token)
+                        database.set_setting("mister_token", mister_token)
                         
                     st.session_state.current_squad = sync_res["squad"]
                     st.session_state.current_saldo = sync_res["saldo"]
