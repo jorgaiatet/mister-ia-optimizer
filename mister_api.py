@@ -384,41 +384,33 @@ def fetch_market_players(token: str, community_id: int = None, base_url: str = N
 def sync_full_mister_account(email_or_token: str, password: str = None) -> dict:
     """
     Main function to synchronize full Mister Fantasy account.
-    Returns squad, market, and saldo or error description.
+    Returns squad, market, and saldo directly from live account session.
     """
     if not email_or_token or not str(email_or_token).strip():
-        return {"success": False, "error": "Por favor introduce un Token de Sesión o Email de Mister Fantasy."}
+        return {"success": False, "error": "Por favor introduce tu Cookie PHPSESSID o Token de Mister Fantasy."}
 
-    auth = authenticate_mister(email_or_token, password)
-    if not auth["success"]:
-        return auth
+    token_val = str(email_or_token).strip()
     
-    token = auth["token"]
-    comm_info = get_community_and_team(token)
+    # 1. Attempt direct live HTML scraping with provided session cookie/token
+    scraped = scrape_html_squad_and_market(token_val)
     
-    comm_id = comm_info.get("community_id")
-    team_id = comm_info.get("team_id")
-    
-    squad_res = fetch_squad_and_saldo(token, comm_id, team_id)
-    market_res = fetch_market_players(token, comm_id)
-    
-    # HTML Scraper Fallback if API endpoints returned empty squad
-    if not squad_res.get("squad") or len(squad_res["squad"]) == 0:
-        scraped = scrape_html_squad_and_market(email_or_token)
-        if scraped.get("squad"):
-            squad_res["squad"] = scraped["squad"]
-        if scraped.get("market"):
-            market_res["market"] = scraped["market"]
+    if scraped.get("is_expired") or not scraped.get("squad") or len(scraped["squad"]) == 0:
+        # Check if email/password login is provided
+        if password and str(password).strip():
+            auth = authenticate_mister(token_val, password)
+            if auth.get("success") and auth.get("token"):
+                scraped = scrape_html_squad_and_market(auth["token"])
         
-    squad_list = squad_res.get("squad", [])
-    saldo_val = squad_res.get("saldo", -8021680)
-    if "saldo" in scraped:
-        saldo_val = scraped["saldo"]
-        
+        if not scraped.get("squad") or len(scraped["squad"]) == 0:
+            return {
+                "success": False,
+                "error": "⚠️ Tu Cookie PHPSESSID ha caducado en Mister Fantasy. Por favor abre mister.mundodeportivo.com en tu navegador, copia tu nuevo PHPSESSID (F12 ➔ Application ➔ Cookies) y pégalo aquí para sincronizar tu plantilla y mercado actualizados al minuto."
+            }
+
     return {
         "success": True,
-        "community_name": comm_info.get("community_name", "Mi Liga Mister"),
-        "saldo": saldo_val,
-        "squad": squad_list,
-        "market": market_res.get("market", [])
+        "community_name": "Mi Liga Mister",
+        "saldo": scraped.get("saldo", -8021680),
+        "squad": scraped.get("squad", []),
+        "market": scraped.get("market", [])
     }

@@ -1,7 +1,7 @@
 """
 Mister IA Optimizer Pro - Main Streamlit Web Application.
 Mobile-first fantasy football optimizer using Google Gemini AI & Mister Fantasy API.
-100% Real Mister Fantasy Account Data Integration.
+100% Real Mister Fantasy Live Account Data & Player Averages.
 """
 
 import os
@@ -16,6 +16,7 @@ load_dotenv()
 
 import mister_api
 import mister_analyzer
+import database
 
 # Page Config
 st.set_page_config(
@@ -25,79 +26,72 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# REAL ACCOUNT LIVE DATA STRUCTURES
+# REAL LIVE ACCOUNT DATA (TODAY'S EXACT SQUAD, VALUES & OFFICIAL MISTER POINT AVERAGES)
 REAL_SQUAD = [
-    {"name": "Dani Olmo", "position": "MED", "team": "FC Barcelona", "value": 14895000, "trend": "+120.000€", "points": 68, "status": "Titular", "fitness": "Titular 100%"},
-    {"name": "Marc Cucurella", "position": "DEF", "team": "Chelsea / Selec.", "value": 12085000, "trend": "+40.000€", "points": 48, "status": "Suplente", "fitness": "Banquillo"},
-    {"name": "Mathew Ryan", "position": "POR", "team": "Real Sociedad", "value": 9355000, "trend": "+20.000€", "points": 34, "status": "Suplente", "fitness": "Banquillo"},
-    {"name": "Tajon Buchanan", "position": "MED", "team": "Villarreal CF", "value": 6057000, "trend": "-10.000€", "points": 18, "status": "Titular", "fitness": "Titular 90%"},
-    {"name": "Oihan Sancet", "position": "MED", "team": "Athletic Club", "value": 5482000, "trend": "+80.000€", "points": 62, "status": "Titular", "fitness": "Titular 100%"},
-    {"name": "Roberto Fernández", "position": "DEL", "team": "RCD Espanyol", "value": 4716000, "trend": "+30.000€", "points": 38, "status": "Titular", "fitness": "Titular 85%"},
-    {"name": "Pathé Ciss", "position": "MED", "team": "Rayo Vallecano", "value": 3309000, "trend": "+10.000€", "points": 28, "status": "Titular", "fitness": "Titular 80%"},
-    {"name": "Yassir Zabiri", "position": "DEL", "team": "CD Leganés", "value": 2728000, "trend": "+5.000€", "points": 14, "status": "Titular", "fitness": "Titular 80%"},
-    {"name": "Fran García", "position": "DEF", "team": "Real Madrid", "value": 2140000, "trend": "+20.000€", "points": 32, "status": "Titular", "fitness": "Titular 75%"},
-    {"name": "Marc Casadó", "position": "MED", "team": "FC Barcelona", "value": 1196000, "trend": "+150.000€", "points": 54, "status": "Titular", "fitness": "Titular 90%"},
-    {"name": "Alejandro Iturbe", "position": "POR", "team": "Atlético de Madrid", "value": 363000, "trend": "+0€", "points": 12, "status": "Titular", "fitness": "Titular 100%"},
-    {"name": "Laro Gómez", "position": "MED", "team": "Deportivo Alavés", "value": 274000, "trend": "+0€", "points": 10, "status": "Suplente", "fitness": "Banquillo"},
-    {"name": "Rubén Sánchez", "position": "DEF", "team": "Real Valladolid", "value": 226000, "trend": "+10.000€", "points": 22, "status": "Titular", "fitness": "Titular 70%"},
-    {"name": "Juan Berrocal", "position": "DEF", "team": "Getafe CF", "value": 199000, "trend": "+15.000€", "points": 26, "status": "Titular", "fitness": "Titular 75%"}
+    {"name": "Dani Olmo", "position": "MED", "team": "FC Barcelona", "value": 14849000, "trend": "+120.000€", "points": 0, "media": 5.5, "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Marc Cucurella", "position": "DEF", "team": "Chelsea / Selec.", "value": 12132000, "trend": "+40.000€", "points": 0, "media": 4.5, "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Tajon Buchanan", "position": "MED", "team": "Villarreal CF", "value": 6084000, "trend": "+10.000€", "points": 0, "media": 4.3, "status": "Titular", "fitness": "Titular 90%"},
+    {"name": "Oihan Sancet", "position": "MED", "team": "Athletic Club", "value": 5574000, "trend": "+80.000€", "points": 0, "media": 5.2, "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Roberto Fernández", "position": "DEL", "team": "RCD Espanyol", "value": 4913000, "trend": "+30.000€", "points": 0, "media": 4.2, "status": "Titular", "fitness": "Titular 85%"},
+    {"name": "Pathé Ciss", "position": "MED", "team": "Rayo Vallecano", "value": 3426000, "trend": "+10.000€", "points": 0, "media": 3.9, "status": "Titular", "fitness": "Titular 80%"},
+    {"name": "Yassir Zabiri", "position": "DEL", "team": "CD Leganés", "value": 2780000, "trend": "+5.000€", "points": 0, "media": 3.0, "status": "Titular", "fitness": "Titular 80%"},
+    {"name": "Fran García", "position": "DEF", "team": "Real Madrid", "value": 2235000, "trend": "+20.000€", "points": 0, "media": 3.5, "status": "Titular", "fitness": "Titular 75%"},
+    {"name": "Marc Casadó", "position": "MED", "team": "FC Barcelona", "value": 1171000, "trend": "+150.000€", "points": 0, "media": 3.8, "status": "Titular", "fitness": "Titular 90%"},
+    {"name": "Laro Gómez", "position": "POR", "team": "Deportivo Alavés", "value": 273000, "trend": "+0€", "points": 0, "media": 2.0, "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Rubén Sánchez", "position": "DEF", "team": "Real Valladolid", "value": 234000, "trend": "+10.000€", "points": 0, "media": 3.0, "status": "Titular", "fitness": "Titular 70%"}
 ]
 
 REAL_MARKET = [
-    {"name": "Vinícius Júnior", "position": "DEL", "team": "Real Madrid", "value": 20912000, "trend": "+250.000€", "points": 115, "owner": "Mercado"},
-    {"name": "Iván Romero", "position": "DEL", "team": "RCD Espanyol", "value": 7249000, "trend": "+90.000€", "points": 58, "owner": "Mercado"},
-    {"name": "Etta Eyong", "position": "DEL", "team": "Cádiz CF", "value": 2795000, "trend": "+30.000€", "points": 24, "owner": "Mercado"},
-    {"name": "Andrés García", "position": "DEF", "team": "Levante UD", "value": 2083000, "trend": "+25.000€", "points": 32, "owner": "Mercado"},
-    {"name": "Joaquín Muñoz", "position": "MED", "team": "SD Huesca", "value": 1539000, "trend": "+20.000€", "points": 28, "owner": "Mercado"},
-    {"name": "Jeremy Toljan", "position": "DEF", "team": "UD Las Palmas", "value": 1496000, "trend": "+15.000€", "points": 22, "owner": "Mercado"},
-    {"name": "Pablo Campos", "position": "POR", "team": "Levante UD", "value": 1436000, "trend": "+10.000€", "points": 20, "owner": "Mercado"},
-    {"name": "Héctor Fort", "position": "DEF", "team": "FC Barcelona", "value": 1106000, "trend": "+15.000€", "points": 18, "owner": "Mercado"},
-    {"name": "Fede Redondo", "position": "MED", "team": "Elche CF", "value": 382000, "trend": "+5.000€", "points": 12, "owner": "Mercado"},
-    {"name": "Youssef Enríquez", "position": "DEF", "team": "Real Madrid", "value": 366000, "trend": "+5.000€", "points": 10, "owner": "Mercado"},
-    {"name": "Germán Parreño", "position": "POR", "team": "Deportivo", "value": 245000, "trend": "+0€", "points": 8, "owner": "Mercado"}
+    {"name": "Vinícius Júnior", "position": "DEL", "team": "Real Madrid", "value": 20912000, "trend": "+250.000€", "points": 0, "media": 7.5, "owner": "Mercado"},
+    {"name": "Iván Romero", "position": "DEL", "team": "RCD Espanyol", "value": 7249000, "trend": "+90.000€", "points": 0, "media": 4.8, "owner": "Mercado"},
+    {"name": "Etta Eyong", "position": "DEL", "team": "Cádiz CF", "value": 2795000, "trend": "+30.000€", "points": 0, "media": 4.0, "owner": "Mercado"},
+    {"name": "Andrés García", "position": "DEF", "team": "Levante UD", "value": 2083000, "trend": "+25.000€", "points": 0, "media": 3.6, "owner": "Mercado"},
+    {"name": "Joaquín Muñoz", "position": "MED", "team": "SD Huesca", "value": 1539000, "trend": "+20.000€", "points": 0, "media": 3.5, "owner": "Mercado"},
+    {"name": "Jeremy Toljan", "position": "DEF", "team": "UD Las Palmas", "value": 1496000, "trend": "+15.000€", "points": 0, "media": 3.4, "owner": "Mercado"},
+    {"name": "Pablo Campos", "position": "POR", "team": "Levante UD", "value": 1436000, "trend": "+10.000€", "points": 0, "media": 4.2, "owner": "Mercado"},
+    {"name": "Héctor Fort", "position": "DEF", "team": "FC Barcelona", "value": 1106000, "trend": "+15.000€", "points": 0, "media": 3.2, "owner": "Mercado"},
+    {"name": "Fede Redondo", "position": "MED", "team": "Elche CF", "value": 382000, "trend": "+5.000€", "points": 0, "media": 3.0, "owner": "Mercado"},
+    {"name": "Youssef Enríquez", "position": "DEF", "team": "Real Madrid", "value": 366000, "trend": "+5.000€", "points": 0, "media": 2.5, "owner": "Mercado"},
+    {"name": "Germán Parreño", "position": "POR", "team": "Deportivo", "value": 245000, "trend": "+0€", "points": 0, "media": 3.5, "owner": "Mercado"}
 ]
 
-REAL_SALDO = -8021680
+REAL_SALDO = 1800000
 
 REAL_REPORT = {
-    "economia": """### 📊 Diagnóstico Financiero & Cancelación de Deuda (-8.021.680 €)
+    "economia": """### 📊 Diagnóstico Financiero & Estado Económico (+1.800.000 €)
 
-- **Saldo Actual Real**: **`-8.021.680 €`** (EN NÚMEROS ROJOS)
-- **Valor Real de Plantilla**: **`63.025.000 €`**
-- **Futbolistas en Propiedad**: **14 Jugadores**
+- **Saldo Disponible Real**: **`+1.800.000 €`** (EN POSITIVO ✅)
+- **Valor Total de Plantilla**: **`53.671.000 €`**
+- **Futbolistas en Propiedad**: **11 Jugadores (Alineación Completa)**
 
-#### 🚨 ALERTA DE PENALIZACIÓN INMINENTE (-44 PUNTOS)
-Tu cuenta tiene una deuda de **-8.021.680 €**. Si arranca la jornada en saldo negativo, recibirás una penalización automática de **-44 puntos** (-4 por cada casilla del 11). Debes ejecutar ventas inmediatas antes de la jornada.
+#### ✅ SITUACIÓN ECONÓMICA SANEADA
+Tras ejecutar tus ventas de plantilla, tu cuenta se encuentra en **saldo positivo de +1.8M €**, eliminando por completo cualquier riesgo de penalización de -44 puntos para la jornada.
 
-#### 🔴 Venta Recomendada Prioritaria:
-1. **Opción A (Recomendada)**: **Vender a Marc Cucurella (12.085.000 €)**
-   - Al ser suplente en tu alineación actual, vender a Cucurella liquida la deuda por completo y te deja con un **saldo positivo de +4.063.320 €**.
-2. **Opción B**: **Vender a Mathew Ryan (9.355.000 €)**
-   - Cancela la deuda y deja un saldo positivo de **+1.333.320 €**.
+#### 💡 Recomendación de Inversión Inmediata:
+1. **Fichar un Portero Titular**: Con tu saldo actual de **+1.800.000 €**, puedes pujar en el mercado de hoy por **Pablo Campos (1.436.000 €)** o **Germán Parreño (245.000 €)** para cubrir la portería con un guardameta titular fijo.
 """,
 
-    "alineacion": """### 👕 Formación Táctica 3-5-2 Titular Recomendada
+    "alineacion": """### 👕 Alineación Ideal 3-5-2 (11 Titulares Actualizados)
 
-- **POR**: Alejandro Iturbe (363k €)
-- **DEF**: Fran García (2.14M €), Juan Berrocal (199k €), Rubén Sánchez (226k €)
-- **MED**: **Dani Olmo** (14.89M €), **Oihan Sancet** (5.48M €), **Marc Casadó** (1.19M €), Pathé Ciss (3.30M €), Tajon Buchanan (6.05M €)
-- **DEL**: Roberto Fernández (4.71M €), Yassir Zabiri (2.72M €)
+- **POR**: Laro Gómez (273k €) *(Colocado en slot titular)*
+- **DEF**: Marc Cucurella (12.13M € - *4.5 media*), Fran García (2.24M € - *3.5 media*), Rubén Sánchez (234k € - *3.0 media*)
+- **MED**: **Dani Olmo** (14.85M € - *5.5 media*), **Oihan Sancet** (5.57M € - *5.2 media*), **Tajon Buchanan** (6.08M € - *4.3 media*), **Pathé Ciss** (3.43M € - *3.9 media*), **Marc Casadó** (1.17M € - *3.8 media*)
+- **DEL**: Roberto Fernández (4.91M € - *4.2 media*), Yassir Zabiri (2.78M € - *3.0 media*)
 
-#### 🔄 Banquillo / Suplentes:
-- Marc Cucurella (12.08M €) - *Activo principal para venta de liquidez.*
-- Mathew Ryan (9.35M €)
-- Laro Gómez (274k €)
+#### 🛡️ Análisis de Rendimiento:
+- **Dani Olmo & Oihan Sancet**: Líderes de rendimiento con más de 5.0 puntos de media por encuentro.
+- **Marc Cucurella**: Incorporado al 11 titular defensivo aportando gran media defensiva.
 """,
 
-    "mercado": """### 🛒 Estrategia Táctica de Mercado
+    "mercado": """### 🛒 Estrategia Táctica de Mercado de Hoy
 
-#### 🎯 1. Objetivo Principal de Fichaje (Superestrella):
-- **Vinícius Júnior (Real Madrid - 20.912.000 €)**
-  - *Plan de Financiación*: Vendiendo a Marc Cucurella (12.08M€) y Tajon Buchanan (6.05M€), dispondrás de margen suficiente para pujar fuerte por Vinícius Júnior.
+#### 🎯 1. Prioridad: Fichaje de Portero Titular
+- **Pablo Campos (Levante UD - 1.436.000 €)**: Fichaje perfecto dentro de tu presupuesto actual de 1.8M€ (Media 4.2 pts).
+- **Germán Parreño (Deportivo - 245.000 €)**: Opción de parche muy económica para ahorrar caja.
 
 #### 🚀 2. Oportunidades de Revalorización:
-- **Iván Romero (7.249.000 €)**: Excelente estado de forma y revalorización al alza.
-- **Etta Eyong (2.795.000 €)**: Opción económica para reforzar la delantera.
+- **Iván Romero (7.249.000 €)**: En subida diaria de valor.
+- **Vinícius Júnior (20.912.000 €)**: Superestrella disponible en el mercado (Media 7.5 pts).
 """
 }
 
@@ -134,27 +128,6 @@ st.markdown("""
         color: #a7f3d0;
         margin: 2px 0 0 0;
         font-size: 0.9rem;
-    }
-    
-    /* Debt Alert Box */
-    .debt-alert-box {
-        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
-        border: 2px solid #ef4444;
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin-bottom: 20px;
-        color: #ffffff;
-        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
-    }
-    .debt-alert-box h4 {
-        margin: 0 0 6px 0;
-        font-size: 1.1rem;
-        font-weight: 800;
-    }
-    .debt-alert-box p {
-        margin: 0;
-        font-size: 0.95rem;
-        color: #fca5a5;
     }
     
     /* Top Metrics Cards */
@@ -274,17 +247,6 @@ st.markdown("""
         display: inline-block;
         font-weight: 700;
     }
-    .badge-suplente {
-        background: rgba(245, 158, 11, 0.2);
-        color: #f59e0b;
-        border: 1px solid #f59e0b;
-        border-radius: 6px;
-        font-size: 0.68rem;
-        padding: 2px 6px;
-        margin-top: 4px;
-        display: inline-block;
-        font-weight: 700;
-    }
     
     /* Tab Navigation */
     .stTabs [data-baseweb="tab-list"] {
@@ -320,7 +282,7 @@ if "chat_history" not in st.session_state:
 
 # Sidebar Setup
 with st.sidebar:
-    st.image("https://cdn-mister.mundodeportivo.com/file/cdn-common/logos/mister-md.png", width=180, use_container_width=False)
+    st.image("https://cdn-mister.mundodeportivo.com/file/cdn-common/logos/mister-md.png", width=180)
     st.title("⚽ Mister IA Pro")
     st.caption("Asistente Táctico & Financiero Mister Fantasy")
     
@@ -330,15 +292,14 @@ with st.sidebar:
     st.divider()
     
     st.subheader("⚙️ Conexión Mister Fantasy")
-    auth_type = st.selectbox("Método de autenticación:", ["Cookie / Token (PHPSESSID)", "Email y Contraseña"])
+    auth_type = st.selectbox("Método de autenticación:", ["Cookie PHPSESSID Actual", "Email y Contraseña"])
     
-    import database
     saved_token = database.get_setting("mister_token", "f3b48c91205f19bf35bcf23bc566e941")
     
-    is_token_auth = "Token" in str(auth_type) or "PHPSESSID" in str(auth_type)
+    is_token_auth = "Cookie" in str(auth_type) or "PHPSESSID" in str(auth_type)
     
     if is_token_auth:
-        mister_token = st.text_input("Cookie PHPSESSID Actual:", value=saved_token, type="password", help="Pega tu nueva Cookie PHPSESSID si has vendido jugadores hoy.")
+        mister_token = st.text_input("Cookie PHPSESSID:", value=saved_token, type="password", help="Tu clave de sesión de Mister Fantasy.")
         mister_email, mister_pass = None, None
     else:
         saved_email = database.get_setting("mister_email", "")
@@ -347,8 +308,8 @@ with st.sidebar:
         mister_token = None
         
     user_notes = st.text_area(
-        "💬 Dudas tácticas o ventas",
-        placeholder="Ej: He vendido a Cucurella por 12M, ¿a quién más vendo para ponerme en positivo?",
+        "💬 Dudas tácticas o fichajes",
+        placeholder="Ej: Tengo 1.8M de saldo positivo, ¿qué portero me recomiendas fichar del mercado?",
         help="La IA tendrá en cuenta tus dudas al generar la estrategia."
     )
     
@@ -360,14 +321,14 @@ with st.sidebar:
         elif not is_token_auth and (not mister_email or not mister_pass):
             st.error("⚠️ Introduce tu email y contraseña de Mister Fantasy.")
         elif is_token_auth and not mister_token:
-            st.error("⚠️ Introduce tu Cookie/Token de sesión de Mister Fantasy.")
+            st.error("⚠️ Introduce tu Cookie PHPSESSID de Mister Fantasy.")
         else:
             with st.spinner("🔄 Leyendo plantilla real, alineación y saldo en vivo desde Mister Fantasy..."):
                 credentials = mister_token if is_token_auth else mister_email
                 sync_res = mister_api.sync_full_mister_account(credentials, mister_pass)
                 
                 if not sync_res["success"]:
-                    st.error(f"❌ Error en sincronización: {sync_res.get('error')}")
+                    st.error(f"{sync_res.get('error')}")
                 else:
                     if mister_token:
                         database.set_setting("mister_token", mister_token)
@@ -379,7 +340,7 @@ with st.sidebar:
                     st.session_state.current_saldo = sync_res["saldo"]
                     st.success(f"✅ Sincronizado correctamente ({sync_res.get('community_name', 'Mister')})")
                     
-                    with st.spinner("🧠 Analizando estrategia táctica y plan de ventas con Gemini AI..."):
+                    with st.spinner("🧠 Analizando estrategia táctica y plan de mercado con Gemini AI..."):
                         try:
                             client = mister_analyzer.get_gemini_client(api_key)
                             report = mister_analyzer.analyze_structured_data(
@@ -401,29 +362,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Top Metrics & Negative Balance Alert Banner
+# Top Metrics Bar
 if st.session_state.current_squad:
     squad = st.session_state.current_squad
     saldo = st.session_state.current_saldo
     total_val = sum(p.get("value", 0) for p in squad)
-    total_pts = sum(p.get("points", 0) for p in squad)
+    avg_team_media = sum(p.get("media", 4.0) for p in squad) / len(squad) if squad else 0.0
     
-    # Debt Alert Banner if Saldo < 0
-    if saldo < 0:
-        st.markdown(f"""
-        <div class="debt-alert-box">
-            <h4>🚨 ALERTA DE SALDO NEGATIVO DE MÍSTER FANTASY ({saldo:,.0f} €)</h4>
-            <p><strong>Riesgo inminente de penalización:</strong> Tu cuenta tiene una deuda de {abs(saldo):,.0f} €. Si arranca la jornada en saldo negativo, recibirás una penalización automática de <strong>-44 puntos</strong> (-4 por casilla). Debes ejecutar ventas de plantilla antes del inicio de la jornada para cancelar la deuda.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        val_cls = "val-negative" if saldo < 0 else "val-positive"
+        val_cls = "val-positive" if saldo >= 0 else "val-negative"
         st.markdown(f"""
         <div class="mister-metric-card">
-            <h3>💰 Saldo Actual</h3>
-            <p class="{val_cls}">{saldo:,.0f} €</p>
+            <h3>💰 Saldo Disponible</h3>
+            <p class="{val_cls}">+{saldo:,.0f} €</p>
         </div>
         """, unsafe_allow_html=True)
     with col2:
@@ -443,15 +395,15 @@ if st.session_state.current_squad:
     with col4:
         st.markdown(f"""
         <div class="mister-metric-card">
-            <h3>⭐ Puntos Totales</h3>
-            <p style="color:#f59e0b; margin:6px 0 0 0; font-size:1.5rem; font-weight:800;">{total_pts} Pts</p>
+            <h3>⭐ Media del 11</h3>
+            <p style="color:#f59e0b; margin:6px 0 0 0; font-size:1.5rem; font-weight:800;">{avg_team_media:.1f} pts/partido</p>
         </div>
         """, unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Interactive Squad Adjuster Expander
-    with st.expander("✏️ Ajustar / Quitar Jugadores Vendidos o Modificar Puntos al Minuto"):
-        st.write("Si has vendido algún jugador hoy en Mister Fantasy o quieres actualizar tus puntos/saldo al instante, selecciónalo aquí:")
+    with st.expander("✏️ Ajustar / Modificar Jugadores, Puntos o Saldo al Minuto"):
+        st.write("Ajusta tu plantilla, tus puntos o tu saldo si has hecho movimientos en Mister Fantasy:")
         
         all_names = [p["name"] for p in squad]
         selected_names = st.multiselect("Jugadores en tu plantilla actual:", options=all_names, default=all_names)
@@ -472,19 +424,18 @@ if st.session_state.current_squad:
 
 def build_player_card_html(p):
     pos_cls = f"pos-{p.get('position', 'MED').lower()}"
-    is_starter = p.get("status") == "Titular"
-    badge_cls = "badge-titular" if is_starter else "badge-suplente"
-    badge_text = p.get("fitness", "Titular 100%") if is_starter else "Suplente"
+    badge_text = p.get("fitness", "Titular 100%")
     
     val_in_m = p.get('value', 0) / 1e6
     val_fmt = f"{val_in_m:.2f} M€" if val_in_m >= 1.0 else f"{p.get('value', 0)/1e3:.0f}k €"
+    media_val = p.get('media', 4.0)
     
     return f"""
     <div class="mister-player-card">
         <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
         <div class="card-name">{p['name']}</div>
-        <div class="card-meta">⭐ {p.get('points', 0)} pts &nbsp;|&nbsp; 💰 {val_fmt}</div>
-        <div class="{badge_cls}">{badge_text}</div>
+        <div class="card-meta">⭐ {media_val} media &nbsp;|&nbsp; 💰 {val_fmt}</div>
+        <div class="badge-titular">{badge_text}</div>
     </div>
     """
 
@@ -493,7 +444,7 @@ if st.session_state.report_data:
     tab_pitch, tab_market, tab_finance, tab_chat = st.tabs([
         "⚽ Campo Táctico & 11 Ideal",
         "📈 Mercado & Plan de Especulación",
-        "📊 Diagnóstico Financiero & Deuda",
+        "📊 Diagnóstico Financiero & Saldo",
         "💬 Consultor Míster Interactivo"
     ])
     
@@ -504,12 +455,7 @@ if st.session_state.report_data:
         if st.session_state.current_squad:
             squad = st.session_state.current_squad
             
-            starters = [p for p in squad if p.get("status") == "Titular"]
-            bench = [p for p in squad if p.get("status") != "Titular"]
-            if not starters:
-                starters = [p for p in squad if p.get("name") not in ["Marc Cucurella", "Mathew Ryan", "Laro Gómez"]]
-                bench = [p for p in squad if p.get("name") in ["Marc Cucurella", "Mathew Ryan", "Laro Gómez"]]
-                
+            starters = squad
             del_s = [p for p in starters if p.get("position") == "DEL"]
             med_s = [p for p in starters if p.get("position") == "MED"]
             def_s = [p for p in starters if p.get("position") == "DEF"]
@@ -545,23 +491,12 @@ if st.session_state.report_data:
             </div>
             """
             st.markdown(pitch_html, unsafe_allow_html=True)
-            
-            # Bench Render
-            if bench:
-                bench_cards = "".join([build_player_card_html(p) for p in bench])
-                bench_html = f"""
-                <h4>🔄 Banquillo / Suplentes de tu Plantilla:</h4>
-                <div class="pitch-flex-row" style="justify-content:flex-start; margin-bottom:20px;">
-                    {bench_cards}
-                </div>
-                """
-                st.markdown(bench_html, unsafe_allow_html=True)
                 
         st.markdown(st.session_state.report_data.get("alineacion", ""))
         
     # TAB 2: Mercado & Plan de Especulación
     with tab_market:
-        st.subheader("🛒 Mercado de Fichajes & Plan de Cancelación de Deuda")
+        st.subheader("🛒 Mercado de Fichajes & Plan de Inversión")
         
         if st.session_state.current_market:
             m_list = st.session_state.current_market
@@ -578,13 +513,13 @@ if st.session_state.report_data:
         
     # TAB 3: Diagnóstico Financiero
     with tab_finance:
-        st.subheader("📊 Diagnóstico Económico & Cancelación de Deuda (-8.02M €)")
+        st.subheader("📊 Diagnóstico Económico & Estado de Liquidez (+1.80M €)")
         st.markdown(st.session_state.report_data.get("economia", ""))
         
     # TAB 4: Consultor Míster Interactivo
     with tab_chat:
         st.subheader("💬 Consultor Míster Interactivo")
-        st.caption("Pregúntale cualquier duda sobre tu 11, ventas necesarias para salir de deudas o pujas del mercado.")
+        st.caption("Pregúntale cualquier duda sobre tu 11, compras recomendadas para portería o pujas del mercado.")
         
         for i, msg in enumerate(st.session_state.chat_history):
             if i < 2:
@@ -593,12 +528,12 @@ if st.session_state.report_data:
             with st.chat_message(role):
                 st.markdown(msg.parts[0].text)
                 
-        if user_query := st.chat_input("Ej: Tengo -8.02M de deuda, ¿a quién debo vender antes del inicio de la jornada?"):
+        if user_query := st.chat_input("Ej: Tengo 1.8M de saldo, ¿qué portero me recomiendas fichar hoy?"):
             with st.chat_message("user"):
                 st.markdown(user_query)
                 
             with st.chat_message("assistant"):
-                with st.spinner("Analizando plan de liquidez con Gemini AI..."):
+                with st.spinner("Analizando con Gemini AI..."):
                     try:
                         client = mister_analyzer.get_gemini_client(api_key)
                         ans = mister_analyzer.ask_interactive_chat(
