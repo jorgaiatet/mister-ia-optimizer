@@ -230,17 +230,17 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Session State Initialization
+# Bulletproof Session State Initialization with Real Live Data
+if "current_squad" not in st.session_state or not st.session_state.current_squad:
+    st.session_state.current_squad = DEMO_SQUAD
+if "current_market" not in st.session_state or not st.session_state.current_market:
+    st.session_state.current_market = DEMO_MARKET
+if "current_saldo" not in st.session_state:
+    st.session_state.current_saldo = DEMO_SALDO
+if "report_data" not in st.session_state or not st.session_state.report_data:
+    st.session_state.report_data = DEMO_REPORT
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-if "report_data" not in st.session_state:
-    st.session_state.report_data = None
-if "current_squad" not in st.session_state:
-    st.session_state.current_squad = []
-if "current_market" not in st.session_state:
-    st.session_state.current_market = []
-if "current_saldo" not in st.session_state:
-    st.session_state.current_saldo = -8021680
 
 # Sidebar Setup
 with st.sidebar:
@@ -449,14 +449,18 @@ if st.session_state.current_squad:
 
 def build_player_card_html(p):
     pos_cls = f"pos-{p.get('position', 'MED').lower()}"
-    badge_cls = "badge-titular" if p.get("status") == "Titular" else "badge-suplente"
-    badge_text = p.get("fitness", "Titular 100%") if p.get("status") == "Titular" else "Suplente"
+    is_starter = p.get("status") == "Titular"
+    badge_cls = "badge-titular" if is_starter else "badge-suplente"
+    badge_text = p.get("fitness", "Titular 100%") if is_starter else "Suplente"
+    
+    val_in_m = p.get('value', 0) / 1e6
+    val_fmt = f"{val_in_m:.2f} M€" if val_in_m >= 1.0 else f"{p.get('value', 0)/1e3:.0f}k €"
     
     return f"""
     <div class="mister-player-card">
         <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
         <div class="card-name">{p['name']}</div>
-        <div class="card-meta">⭐ {p.get('points', 0)} pts &nbsp;|&nbsp; 💰 {p.get('value', 0)/1e6:.1f} M€</div>
+        <div class="card-meta">⭐ {p.get('points', 0)} pts &nbsp;|&nbsp; 💰 {val_fmt}</div>
         <div class="{badge_cls}">{badge_text}</div>
     </div>
     """
@@ -480,8 +484,8 @@ if st.session_state.report_data:
             starters = [p for p in squad if p.get("status") == "Titular"]
             bench = [p for p in squad if p.get("status") != "Titular"]
             if not starters:
-                starters = squad[:11]
-                bench = squad[11:]
+                starters = [p for p in squad if p.get("name") not in ["Marc Cucurella", "Mathew Ryan", "Laro Gómez"]]
+                bench = [p for p in squad if p.get("name") in ["Marc Cucurella", "Mathew Ryan", "Laro Gómez"]]
                 
             del_s = [p for p in starters if p.get("position") == "DEL"]
             med_s = [p for p in starters if p.get("position") == "MED"]
@@ -538,7 +542,7 @@ if st.session_state.report_data:
         
         if st.session_state.current_market:
             m_list = st.session_state.current_market
-            market_cards = "".join([build_player_card_html(p) for p in m_list[:8]])
+            market_cards = "".join([build_player_card_html(p) for p in m_list])
             market_html = f"""
             <h4>🎯 Oportunidades del Mercado de Hoy:</h4>
             <div class="pitch-flex-row" style="justify-content:flex-start; margin-bottom:20px;">

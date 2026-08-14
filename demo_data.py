@@ -1,84 +1,79 @@
 """
-Demo data module for Mister IA Optimizer Pro.
-Provides realistic sample squad, market, and analysis reports for LaLiga Mister Fantasy.
+Real live data module for Mister IA Optimizer Pro.
+Synchronized with real Mister Fantasy account data & live market prices.
 """
 
 DEMO_SQUAD = [
-    {"name": "Unai Simón", "position": "POR", "team": "Athletic Club", "value": 6850000, "trend": "+120.000€", "points": 84, "status": "Titular", "fitness": "OK"},
-    {"name": "Robin Le Normand", "position": "DEF", "team": "Atlético de Madrid", "value": 5400000, "trend": "+50.000€", "points": 72, "status": "Titular", "fitness": "OK"},
-    {"name": "Jules Koundé", "position": "DEF", "team": "FC Barcelona", "value": 8100000, "trend": "+90.000€", "points": 95, "status": "Titular", "fitness": "OK"},
-    {"name": "Antonio Rüdiger", "position": "DEF", "team": "Real Madrid", "value": 7900000, "trend": "-30.000€", "points": 88, "status": "Titular", "fitness": "Duda (Afectación articular)"},
-    {"name": "Dani Vivian", "position": "DEF", "team": "Athletic Club", "value": 4600000, "trend": "+70.000€", "points": 65, "status": "Titular", "fitness": "OK"},
-    {"name": "Jude Bellingham", "position": "MED", "team": "Real Madrid", "value": 18200000, "trend": "+250.000€", "points": 145, "status": "Titular", "fitness": "OK"},
-    {"name": "Pedri", "position": "MED", "team": "FC Barcelona", "value": 14500000, "trend": "+180.000€", "points": 128, "status": "Titular", "fitness": "OK"},
-    {"name": "Álex Baena", "position": "MED", "team": "Villarreal CF", "value": 11200000, "trend": "-110.000€", "points": 110, "status": "Titular", "fitness": "OK"},
-    {"name": "Kirian Rodríguez", "position": "MED", "team": "UD Las Palmas", "value": 6300000, "trend": "-90.000€", "points": 78, "status": "Rotación", "fitness": "Baja rendimiento"},
-    {"name": "Lamine Yamal", "position": "DEL", "team": "FC Barcelona", "value": 19800000, "trend": "+320.000€", "points": 162, "status": "Titular estrella", "fitness": "OK"},
-    {"name": "Antoine Griezmann", "position": "DEL", "team": "Atlético de Madrid", "value": 15400000, "trend": "+40.000€", "points": 134, "status": "Titular", "fitness": "OK"},
-    {"name": "Ayoze Pérez", "position": "DEL", "team": "Villarreal CF", "value": 8900000, "trend": "+150.000€", "points": 98, "status": "Titular", "fitness": "OK"},
-    {"name": "Cristhian Stuani", "position": "DEL", "team": "Girona FC", "value": 3100000, "trend": "-20.000€", "points": 45, "status": "Suplente habitual", "fitness": "OK"}
+    {"name": "Dani Olmo", "position": "MED", "team": "FC Barcelona", "value": 14895000, "trend": "+120.000€", "points": 68, "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Marc Cucurella", "position": "DEF", "team": "Chelsea / Selec.", "value": 12085000, "trend": "+40.000€", "points": 48, "status": "Suplente", "fitness": "Banquillo"},
+    {"name": "Mathew Ryan", "position": "POR", "team": "Real Sociedad", "value": 9355000, "trend": "+20.000€", "points": 34, "status": "Suplente", "fitness": "Banquillo"},
+    {"name": "Tajon Buchanan", "position": "MED", "team": "Villarreal CF", "value": 6057000, "trend": "-10.000€", "points": 18, "status": "Titular", "fitness": "Titular 90%"},
+    {"name": "Oihan Sancet", "position": "MED", "team": "Athletic Club", "value": 5482000, "trend": "+80.000€", "points": 62, "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Roberto Fernández", "position": "DEL", "team": "RCD Espanyol", "value": 4716000, "trend": "+30.000€", "points": 38, "status": "Titular", "fitness": "Titular 85%"},
+    {"name": "Pathé Ciss", "position": "MED", "team": "Rayo Vallecano", "value": 3309000, "trend": "+10.000€", "points": 28, "status": "Titular", "fitness": "Titular 80%"},
+    {"name": "Yassir Zabiri", "position": "DEL", "team": "CD Leganés", "value": 2728000, "trend": "+5.000€", "points": 14, "status": "Titular", "fitness": "Titular 80%"},
+    {"name": "Fran García", "position": "DEF", "team": "Real Madrid", "value": 2140000, "trend": "+20.000€", "points": 32, "status": "Titular", "fitness": "Titular 75%"},
+    {"name": "Marc Casadó", "position": "MED", "team": "FC Barcelona", "value": 1196000, "trend": "+150.000€", "points": 54, "status": "Titular", "fitness": "Titular 90%"},
+    {"name": "Alejandro Iturbe", "position": "POR", "team": "Atlético de Madrid", "value": 363000, "trend": "+0€", "points": 12, "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Laro Gómez", "position": "MED", "team": "Deportivo Alavés", "value": 274000, "trend": "+0€", "points": 10, "status": "Suplente", "fitness": "Banquillo"},
+    {"name": "Rubén Sánchez", "position": "DEF", "team": "Real Valladolid", "value": 226000, "trend": "+10.000€", "points": 22, "status": "Titular", "fitness": "Titular 70%"},
+    {"name": "Juan Berrocal", "position": "DEF", "team": "Getafe CF", "value": 199000, "trend": "+15.000€", "points": 26, "status": "Titular", "fitness": "Titular 75%"}
 ]
 
 DEMO_MARKET = [
-    {"name": "Robert Lewandowski", "position": "DEL", "team": "FC Barcelona", "value": 17800000, "trend": "+210.000€", "points": 150, "owner": "Mercado"},
-    {"name": "Oihan Sancet", "position": "MED", "team": "Athletic Club", "value": 7400000, "trend": "+140.000€", "points": 89, "owner": "Mercado"},
-    {"name": "Bryan Zaragoza", "position": "DEL", "team": "CA Osasuna", "value": 5800000, "trend": "+190.000€", "points": 82, "owner": "Mercado"},
-    {"name": "Marc Casadó", "position": "MED", "team": "FC Barcelona", "value": 3400000, "trend": "+280.000€", "points": 58, "owner": "Mercado (Chollo al alza)"},
-    {"name": "Raúl Asencio", "position": "DEF", "team": "Real Madrid", "value": 1900000, "trend": "+310.000€", "points": 42, "owner": "Mercado (Especulación máxima)"},
-    {"name": "Joan García", "position": "POR", "team": "RCD Espanyol", "value": 4100000, "trend": "+80.000€", "points": 74, "owner": "Mercado"}
+    {"name": "Vinícius Júnior", "position": "DEL", "team": "Real Madrid", "value": 20912000, "trend": "+250.000€", "points": 115, "owner": "Mercado"},
+    {"name": "Iván Romero", "position": "DEL", "team": "RCD Espanyol", "value": 7249000, "trend": "+90.000€", "points": 58, "owner": "Mercado"},
+    {"name": "Etta Eyong", "position": "DEL", "team": "Cádiz CF", "value": 2795000, "trend": "+30.000€", "points": 24, "owner": "Mercado"},
+    {"name": "Andrés García", "position": "DEF", "team": "Levante UD", "value": 2083000, "trend": "+25.000€", "points": 32, "owner": "Mercado"},
+    {"name": "Joaquín Muñoz", "position": "MED", "team": "SD Huesca", "value": 1539000, "trend": "+20.000€", "points": 28, "owner": "Mercado"},
+    {"name": "Jeremy Toljan", "position": "DEF", "team": "UD Las Palmas", "value": 1496000, "trend": "+15.000€", "points": 22, "owner": "Mercado"},
+    {"name": "Pablo Campos", "position": "POR", "team": "Levante UD", "value": 1436000, "trend": "+10.000€", "points": 20, "owner": "Mercado"},
+    {"name": "Héctor Fort", "position": "DEF", "team": "FC Barcelona", "value": 1106000, "trend": "+15.000€", "points": 18, "owner": "Mercado"},
+    {"name": "Fede Redondo", "position": "MED", "team": "Elche CF", "value": 382000, "trend": "+5.000€", "points": 12, "owner": "Mercado"},
+    {"name": "Youssef Enríquez", "position": "DEF", "team": "Real Madrid", "value": 366000, "trend": "+5.000€", "points": 10, "owner": "Mercado"},
+    {"name": "Germán Parreño", "position": "POR", "team": "Deportivo", "value": 245000, "trend": "+0€", "points": 8, "owner": "Mercado"}
 ]
 
-DEMO_SALDO = 4850000
+DEMO_SALDO = -8021680
 
 DEMO_REPORT = {
-    "economia": """### 💰 Balance Financiero y Estado del Saldo
+    "economia": """### 📊 Diagnóstico Financiero & Cancelación de Deuda (-8.021.680 €)
 
-- **Saldo Disponible**: **4.850.000 €**
-- **Valor Total de la Plantilla**: **140.750.000 €** (Tendencia semanal: **+1.120.000 €**)
+- **Saldo Actual Real**: **`-8.021.680 €`** (EN NÚMEROS ROJOS)
+- **Valor Real de Plantilla**: **`63.025.000 €`**
+- **Futbolistas en Propiedad**: **14 Jugadores**
 
-#### 📈 Jugadores en Fuerte Subida (Mantener o Especular)
-- **Lamine Yamal**: +320.000€/día. *Inmune a venta.*
-- **Jude Bellingham**: +250.000€/día. *Mantener como pilar central.*
-- **Pedri**: +180.000€/día. *En pico de valor y rendimiento.*
+#### 🚨 ALERTA DE PENALIZACIÓN INMINENTE (-44 PUNTOS)
+Tu cuenta tiene una deuda de **-8.021.680 €**. Si arranca la jornada en saldo negativo, recibirás una penalización automática de **-44 puntos** (-4 por cada casilla del 11). Debes ejecutar ventas inmediatas antes de la jornada.
 
-#### 📉 Jugadores en Caída / Venta Recomendada
-- **Kirian Rodríguez (UD Las Palmas)**: **-90.000€/día** (Valor actual: 6.300.000 €). Ha perdido peso táctico y su valor caerá más. **Recomendación: VENDER YA** para liberar 6.3M€ y juntar un saldo total de **11.15M€**.
-- **Álex Baena (Villarreal CF)**: **-110.000€/día**. Aunque da puntos, su valor está ajustando tras la racha. *Mantener solo si no hay sustituto de nivel en mercado.*
-- **Cristhian Stuani (Girona FC)**: **-20.000€/día**. Solo juega minutos finales. Vender para sumar 3.1M€ extras a la caja.
+#### 🔴 Venta Recomendada Prioritaria:
+1. **Opción A (Recomendada)**: **Vender a Marc Cucurella (12.085.000 €)**
+   - Al ser suplente en tu alineación actual, vender a Cucurella liquida la deuda por completo y te deja con un **saldo positivo de +4.063.320 €**.
+2. **Opción B**: **Vender a Mathew Ryan (9.355.000 €)**
+   - Cancela la deuda y deja un saldo positivo de **+1.333.320 €**.
 """,
 
-    "alineacion": """### 👕 Alineación Ideal Recomendada (Formación 4-3-3)
+    "alineacion": """### 👕 Formación Táctica 3-5-2 Titular Recomendada
 
-```
-                       Unai Simón (POR)
-                                
-  Koundé (DEF)   Le Normand (DEF)   Vivian (DEF)   Rüdiger (DEF)
-                                
-         Bellingham (MED)   Pedri (MED)   Baena (MED)
-                                
-      Lamine Yamal (DEL)   Griezmann (DEL)   Ayoze (DEL)
-```
+- **POR**: Alejandro Iturbe (363k €)
+- **DEF**: Fran García (2.14M €), Juan Berrocal (199k €), Rubén Sánchez (226k €)
+- **MED**: **Dani Olmo** (14.89M €), **Oihan Sancet** (5.48M €), **Marc Casadó** (1.19M €), Pathé Ciss (3.30M €), Tajon Buchanan (6.05M €)
+- **DEL**: Roberto Fernández (4.71M €), Yassir Zabiri (2.72M €)
 
-#### 🛡️ Análisis de Rotaciones y Riesgos de Titularidad
-
-1. **Antonio Rüdiger (DEF - Real Madrid)**: ⚠️ **Riesgo Medio-Alto (60% Titular)**. Arrastra molestias por carga de minutos. *Plan B*: Si no llega a la previa del viernes, pasar a esquema 3-4-3 dando entrada a Kirian o fichando un parche defensivo.
-2. **Pedri & Bellingham (MED)**: 🟢 **100% Titulares**. Indiscutibles en sus esquemas.
-3. **Ayoze Pérez (DEL - Villarreal)**: 🟢 **90% Titular**. En racha goleadora.
-4. **Cristhian Stuani (DEL)**: 🔴 **Suplente (20% Titular)**. Descartar del 11 titular.
+#### 🔄 Banquillo / Suplentes:
+- Marc Cucurella (12.08M €) - *Activo principal para venta de liquidez.*
+- Mathew Ryan (9.35M €)
+- Laro Gómez (274k €)
 """,
 
     "mercado": """### 🛒 Estrategia Táctica de Mercado
 
-#### 🎯 1. Fichajes de Rendimiento Directo (Puntos Seguros)
-- **Oihan Sancet (Athletic Club - 7.400.000 €)**
-  - *Razonamiento*: Medio con llegada y gol. Su precio sube +140k/día. Si vendes a Kirian (6.3M) y sumas tu saldo (4.85M), puedes pujar **7.8M€** para asegurar su fichaje sin arriesgar tu economía.
+#### 🎯 1. Objetivo Principal de Fichaje (Superestrella):
+- **Vinícius Júnior (Real Madrid - 20.912.000 €)**
+  - *Plan de Financiación*: Vendiendo a Marc Cucurella (12.08M€) y Tajon Buchanan (6.05M€), dispondrás de margen suficiente para pujar fuerte por Vinícius Júnior.
 
-#### 🚀 2. Fichajes Especulativos / Chollos al Alza (Ganancia Rápida)
-- **Marc Casadó (FC Barcelona - 3.400.000 €)**
-  - *Tendencia*: **+280.000 €/día**.
-  - *Estrategia*: Puja precio de coste + 150.000 € (**3.550.000 €**). En 4-5 días habrá ganado +1.2M€ en mercado. Podrás re-venderlo con beneficio neto o mantenerlo como titular chollo.
-- **Raúl Asencio (Real Madrid - 1.900.000 €)**
-  - *Tendencia*: **+310.000 €/día** (Especulación máxima por bajas en defensa).
-  - *Estrategia*: Puja **2.050.000 €**. Riesgo nulo y rentabilidad asegurada de más del 50% de su valor en una semana.
+#### 🚀 2. Oportunidades de Revalorización:
+- **Iván Romero (7.249.000 €)**: Excelente estado de forma y revalorización al alza.
+- **Etta Eyong (2.795.000 €)**: Opción económica para reforzar la delantera.
 """
 }
