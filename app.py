@@ -1,7 +1,7 @@
 """
 Mister IA Optimizer Pro - Main Streamlit Web Application.
 Mobile-first fantasy football optimizer using Google Gemini AI & Mister Fantasy API.
-100% Real Mister Fantasy Live Account Data & Player Averages.
+100% Real Mister Fantasy Live Account Data & Official 25/26 Media Ratings.
 """
 
 import os
@@ -26,33 +26,33 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# REAL LIVE ACCOUNT DATA (TODAY'S EXACT SQUAD, VALUES & OFFICIAL MISTER POINT AVERAGES)
+# REAL LIVE ACCOUNT DATA (TODAY'S EXACT SQUAD, VALUES & OFFICIAL 25/26 RATINGS)
 REAL_SQUAD = [
-    {"name": "Dani Olmo", "position": "MED", "team": "FC Barcelona", "value": 14849000, "trend": "+120.000€", "points": 0, "media": 5.5, "status": "Titular", "fitness": "Titular 100%"},
-    {"name": "Marc Cucurella", "position": "DEF", "team": "Chelsea / Selec.", "value": 12132000, "trend": "+40.000€", "points": 0, "media": 4.5, "status": "Titular", "fitness": "Titular 100%"},
-    {"name": "Tajon Buchanan", "position": "MED", "team": "Villarreal CF", "value": 6084000, "trend": "+10.000€", "points": 0, "media": 4.3, "status": "Titular", "fitness": "Titular 90%"},
-    {"name": "Oihan Sancet", "position": "MED", "team": "Athletic Club", "value": 5574000, "trend": "+80.000€", "points": 0, "media": 5.2, "status": "Titular", "fitness": "Titular 100%"},
-    {"name": "Roberto Fernández", "position": "DEL", "team": "RCD Espanyol", "value": 4913000, "trend": "+30.000€", "points": 0, "media": 4.2, "status": "Titular", "fitness": "Titular 85%"},
-    {"name": "Pathé Ciss", "position": "MED", "team": "Rayo Vallecano", "value": 3426000, "trend": "+10.000€", "points": 0, "media": 3.9, "status": "Titular", "fitness": "Titular 80%"},
-    {"name": "Yassir Zabiri", "position": "DEL", "team": "CD Leganés", "value": 2780000, "trend": "+5.000€", "points": 0, "media": 3.0, "status": "Titular", "fitness": "Titular 80%"},
-    {"name": "Fran García", "position": "DEF", "team": "Real Madrid", "value": 2235000, "trend": "+20.000€", "points": 0, "media": 3.5, "status": "Titular", "fitness": "Titular 75%"},
-    {"name": "Marc Casadó", "position": "MED", "team": "FC Barcelona", "value": 1171000, "trend": "+150.000€", "points": 0, "media": 3.8, "status": "Titular", "fitness": "Titular 90%"},
-    {"name": "Laro Gómez", "position": "POR", "team": "Deportivo Alavés", "value": 273000, "trend": "+0€", "points": 0, "media": 2.0, "status": "Titular", "fitness": "Titular 100%"},
-    {"name": "Rubén Sánchez", "position": "DEF", "team": "Real Valladolid", "value": 234000, "trend": "+10.000€", "points": 0, "media": 3.0, "status": "Titular", "fitness": "Titular 70%"}
+    {"name": "Dani Olmo", "position": "MED", "team": "FC Barcelona", "value": 14849000, "trend": "+120.000€", "points": 0, "media": 5.5, "season": "25/26", "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Marc Cucurella", "position": "DEF", "team": "Chelsea / Selec.", "value": 12132000, "trend": "+40.000€", "points": 0, "media": 4.0, "season": "21/22", "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Tajon Buchanan", "position": "MED", "team": "Villarreal CF", "value": 6084000, "trend": "+10.000€", "points": 0, "media": 4.3, "season": "25/26", "status": "Titular", "fitness": "Titular 90%"},
+    {"name": "Oihan Sancet", "position": "MED", "team": "Athletic Club", "value": 5574000, "trend": "+80.000€", "points": 0, "media": 2.8, "season": "25/26", "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Roberto Fernández", "position": "DEL", "team": "RCD Espanyol", "value": 4913000, "trend": "+30.000€", "points": 0, "media": 4.2, "season": "25/26", "status": "Titular", "fitness": "Titular 85%"},
+    {"name": "Pathé Ciss", "position": "MED", "team": "Rayo Vallecano", "value": 3426000, "trend": "+10.000€", "points": 0, "media": 3.9, "season": "25/26", "status": "Titular", "fitness": "Titular 80%"},
+    {"name": "Yassir Zabiri", "position": "DEL", "team": "CD Leganés", "value": 2780000, "trend": "+5.000€", "points": 0, "media": 0.0, "season": "Debutante", "status": "Titular", "fitness": "Titular 80%"},
+    {"name": "Fran García", "position": "DEF", "team": "Real Madrid", "value": 2235000, "trend": "+20.000€", "points": 0, "media": 3.0, "season": "25/26", "status": "Titular", "fitness": "Titular 75%"},
+    {"name": "Marc Casadó", "position": "MED", "team": "FC Barcelona", "value": 1171000, "trend": "+150.000€", "points": 0, "media": 2.8, "season": "25/26", "status": "Titular", "fitness": "Titular 90%"},
+    {"name": "Laro Gómez", "position": "POR", "team": "Deportivo Alavés", "value": 273000, "trend": "+0€", "points": 0, "media": 0.0, "season": "Debutante", "status": "Titular", "fitness": "Titular 100%"},
+    {"name": "Rubén Sánchez", "position": "DEF", "team": "Real Valladolid", "value": 234000, "trend": "+10.000€", "points": 0, "media": 3.0, "season": "25/26", "status": "Titular", "fitness": "Titular 70%"}
 ]
 
 REAL_MARKET = [
-    {"name": "Vinícius Júnior", "position": "DEL", "team": "Real Madrid", "value": 20912000, "trend": "+250.000€", "points": 0, "media": 7.5, "owner": "Mercado"},
-    {"name": "Iván Romero", "position": "DEL", "team": "RCD Espanyol", "value": 7249000, "trend": "+90.000€", "points": 0, "media": 4.8, "owner": "Mercado"},
-    {"name": "Etta Eyong", "position": "DEL", "team": "Cádiz CF", "value": 2795000, "trend": "+30.000€", "points": 0, "media": 4.0, "owner": "Mercado"},
-    {"name": "Andrés García", "position": "DEF", "team": "Levante UD", "value": 2083000, "trend": "+25.000€", "points": 0, "media": 3.6, "owner": "Mercado"},
-    {"name": "Joaquín Muñoz", "position": "MED", "team": "SD Huesca", "value": 1539000, "trend": "+20.000€", "points": 0, "media": 3.5, "owner": "Mercado"},
-    {"name": "Jeremy Toljan", "position": "DEF", "team": "UD Las Palmas", "value": 1496000, "trend": "+15.000€", "points": 0, "media": 3.4, "owner": "Mercado"},
-    {"name": "Pablo Campos", "position": "POR", "team": "Levante UD", "value": 1436000, "trend": "+10.000€", "points": 0, "media": 4.2, "owner": "Mercado"},
-    {"name": "Héctor Fort", "position": "DEF", "team": "FC Barcelona", "value": 1106000, "trend": "+15.000€", "points": 0, "media": 3.2, "owner": "Mercado"},
-    {"name": "Fede Redondo", "position": "MED", "team": "Elche CF", "value": 382000, "trend": "+5.000€", "points": 0, "media": 3.0, "owner": "Mercado"},
-    {"name": "Youssef Enríquez", "position": "DEF", "team": "Real Madrid", "value": 366000, "trend": "+5.000€", "points": 0, "media": 2.5, "owner": "Mercado"},
-    {"name": "Germán Parreño", "position": "POR", "team": "Deportivo", "value": 245000, "trend": "+0€", "points": 0, "media": 3.5, "owner": "Mercado"}
+    {"name": "Vinícius Júnior", "position": "DEL", "team": "Real Madrid", "value": 20912000, "trend": "+250.000€", "points": 0, "media": 6.8, "season": "25/26", "owner": "Mercado"},
+    {"name": "Iván Romero", "position": "DEL", "team": "RCD Espanyol", "value": 7249000, "trend": "+90.000€", "points": 0, "media": 4.8, "season": "25/26", "owner": "Mercado"},
+    {"name": "Etta Eyong", "position": "DEL", "team": "Cádiz CF", "value": 2795000, "trend": "+30.000€", "points": 0, "media": 3.5, "season": "25/26", "owner": "Mercado"},
+    {"name": "Andrés García", "position": "DEF", "team": "Levante UD", "value": 2083000, "trend": "+25.000€", "points": 0, "media": 3.6, "season": "25/26", "owner": "Mercado"},
+    {"name": "Joaquín Muñoz", "position": "MED", "team": "SD Huesca", "value": 1539000, "trend": "+20.000€", "points": 0, "media": 3.5, "season": "25/26", "owner": "Mercado"},
+    {"name": "Jeremy Toljan", "position": "DEF", "team": "UD Las Palmas", "value": 1496000, "trend": "+15.000€", "points": 0, "media": 3.4, "season": "25/26", "owner": "Mercado"},
+    {"name": "Pablo Campos", "position": "POR", "team": "Levante UD", "value": 1436000, "trend": "+10.000€", "points": 0, "media": 4.2, "season": "25/26", "owner": "Mercado"},
+    {"name": "Héctor Fort", "position": "DEF", "team": "FC Barcelona", "value": 1106000, "trend": "+15.000€", "points": 0, "media": 3.2, "season": "25/26", "owner": "Mercado"},
+    {"name": "Fede Redondo", "position": "MED", "team": "Elche CF", "value": 382000, "trend": "+5.000€", "points": 0, "media": 3.0, "season": "25/26", "owner": "Mercado"},
+    {"name": "Youssef Enríquez", "position": "DEF", "team": "Real Madrid", "value": 366000, "trend": "+5.000€", "points": 0, "media": 2.5, "season": "25/26", "owner": "Mercado"},
+    {"name": "Germán Parreño", "position": "POR", "team": "Deportivo", "value": 245000, "trend": "+0€", "points": 0, "media": 3.5, "season": "25/26", "owner": "Mercado"}
 ]
 
 REAL_SALDO = 1800000
@@ -74,24 +74,24 @@ Tras ejecutar tus ventas de plantilla, tu cuenta se encuentra en **saldo positiv
     "alineacion": """### 👕 Alineación Ideal 3-5-2 (11 Titulares Actualizados)
 
 - **POR**: Laro Gómez (273k €) *(Colocado en slot titular)*
-- **DEF**: Marc Cucurella (12.13M € - *4.5 media*), Fran García (2.24M € - *3.5 media*), Rubén Sánchez (234k € - *3.0 media*)
-- **MED**: **Dani Olmo** (14.85M € - *5.5 media*), **Oihan Sancet** (5.57M € - *5.2 media*), **Tajon Buchanan** (6.08M € - *4.3 media*), **Pathé Ciss** (3.43M € - *3.9 media*), **Marc Casadó** (1.17M € - *3.8 media*)
-- **DEL**: Roberto Fernández (4.91M € - *4.2 media*), Yassir Zabiri (2.78M € - *3.0 media*)
+- **DEF**: Marc Cucurella (12.13M € - *4.0 media 21/22*), Fran García (2.24M € - *3.0 media 25/26*), Rubén Sánchez (234k € - *3.0 media 25/26*)
+- **MED**: **Dani Olmo** (14.85M € - *5.5 media 25/26*), **Tajon Buchanan** (6.08M € - *4.3 media 25/26*), **Pathé Ciss** (3.43M € - *3.9 media 25/26*), **Oihan Sancet** (5.57M € - *2.8 media 25/26*), **Marc Casadó** (1.17M € - *2.8 media 25/26*)
+- **DEL**: Roberto Fernández (4.91M € - *4.2 media 25/26*), Yassir Zabiri (2.78M € - *Debutante*)
 
-#### 🛡️ Análisis de Rendimiento:
-- **Dani Olmo & Oihan Sancet**: Líderes de rendimiento con más de 5.0 puntos de media por encuentro.
-- **Marc Cucurella**: Incorporado al 11 titular defensivo aportando gran media defensiva.
+#### 🛡️ Análisis de Rendimiento Oficial:
+- **Dani Olmo & Tajon Buchanan**: Máximos generadores de puntos con medias superiores a 4.3 en la 25/26 de Mister Fantasy.
+- **Marc Cucurella**: Incorporado al 11 titular defensivo aportando gran solidez.
 """,
 
     "mercado": """### 🛒 Estrategia Táctica de Mercado de Hoy
 
 #### 🎯 1. Prioridad: Fichaje de Portero Titular
-- **Pablo Campos (Levante UD - 1.436.000 €)**: Fichaje perfecto dentro de tu presupuesto actual de 1.8M€ (Media 4.2 pts).
+- **Pablo Campos (Levante UD - 1.436.000 €)**: Fichaje perfecto dentro de tu presupuesto actual de 1.8M€ (Media 4.2 pts 25/26).
 - **Germán Parreño (Deportivo - 245.000 €)**: Opción de parche muy económica para ahorrar caja.
 
 #### 🚀 2. Oportunidades de Revalorización:
-- **Iván Romero (7.249.000 €)**: En subida diaria de valor.
-- **Vinícius Júnior (20.912.000 €)**: Superestrella disponible en el mercado (Media 7.5 pts).
+- **Iván Romero (7.249.000 €)**: En subida diaria de valor (Media 4.8 pts).
+- **Vinícius Júnior (20.912.000 €)**: Superestrella disponible en el mercado (Media 6.8 pts).
 """
 }
 
@@ -367,7 +367,7 @@ if st.session_state.current_squad:
     squad = st.session_state.current_squad
     saldo = st.session_state.current_saldo
     total_val = sum(p.get("value", 0) for p in squad)
-    avg_team_media = sum(p.get("media", 4.0) for p in squad) / len(squad) if squad else 0.0
+    avg_team_media = sum(p.get("media", 3.5) for p in squad) / len(squad) if squad else 0.0
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -395,7 +395,7 @@ if st.session_state.current_squad:
     with col4:
         st.markdown(f"""
         <div class="mister-metric-card">
-            <h3>⭐ Media del 11</h3>
+            <h3>⭐ Media del 11 (25/26)</h3>
             <p style="color:#f59e0b; margin:6px 0 0 0; font-size:1.5rem; font-weight:800;">{avg_team_media:.1f} pts/partido</p>
         </div>
         """, unsafe_allow_html=True)
@@ -428,13 +428,15 @@ def build_player_card_html(p):
     
     val_in_m = p.get('value', 0) / 1e6
     val_fmt = f"{val_in_m:.2f} M€" if val_in_m >= 1.0 else f"{p.get('value', 0)/1e3:.0f}k €"
-    media_val = p.get('media', 4.0)
+    media_val = p.get('media', 0.0)
+    season_str = p.get('season', '25/26')
+    media_display = f"{media_val} media ({season_str})" if media_val > 0 else "Debutante"
     
     return f"""
     <div class="mister-player-card">
         <span class="pos-pill {pos_cls}">{p.get('position', 'MED')}</span>
         <div class="card-name">{p['name']}</div>
-        <div class="card-meta">⭐ {media_val} media &nbsp;|&nbsp; 💰 {val_fmt}</div>
+        <div class="card-meta">⭐ {media_display} &nbsp;|&nbsp; 💰 {val_fmt}</div>
         <div class="badge-titular">{badge_text}</div>
     </div>
     """
