@@ -205,59 +205,55 @@ def scrape_html_squad_and_market(token_or_cookie: str) -> dict:
                 except Exception:
                     pass
 
-            # Extract real slot layout
-            slots = re.findall(r'<button[^>]*id=["\'](slot-\d+)["\'][^>]*>([\s\S]*?)</button>', r_team.text)
+            # Extract real player hrefs
+            player_hrefs = re.findall(r'href="players/(\d+)/([^"]+)"', r_team.text)
+            seen_p = set()
             starter_names = set()
             
+            # Extract slots
+            slots = re.findall(r'<button[^>]*id=["\'](slot-\d+)["\'][^>]*>([\s\S]*?)</button>', r_team.text)
             for slot_id, content in slots:
                 name_m = re.search(r'class="name"[^>]*>([^<]+)<', content)
                 if name_m:
                     clean_n = html.unescape(name_m.group(1).strip())
                     if clean_n and clean_n not in ignore_names:
                         starter_names.add(clean_n)
-                        meta = LALIGA_PLAYERS_DB.get(clean_n, {
-                            "pos": "POR" if slot_id == "slot-1" else ("DEF" if int(slot_id.replace("slot-", "")) <= 4 else ("MED" if int(slot_id.replace("slot-", "")) <= 9 else "DEL")),
-                            "team": "LaLiga",
-                            "val": 4500000,
-                            "pts": 35,
-                            "trend": "+20.000€",
-                            "fitness": "Titular 100%"
-                        })
+
+            for pid, slug in player_hrefs:
+                if pid not in seen_p and slug not in ['quiniela', 'ayuda']:
+                    seen_p.add(pid)
+                    # Fetch profile page for live stats
+                    try:
+                        pr = requests.get(f"https://mister.mundodeportivo.com/players/{pid}/{slug}", headers=headers, timeout=4)
+                        pr.encoding = 'utf-8'
+                        
+                        name_m = re.search(r'<h[12][^>]*class="name"[^>]*>([^<]+)<', pr.text)
+                        clean_n = html.unescape(name_m.group(1).strip()) if name_m else slug.replace('-', ' ').title()
+                        
+                        val_m = re.search(r'<div class="label">\s*Valor\s*</div>\s*<div class="value">\s*([\d\.]+)\s*</div>', pr.text)
+                        val = int(val_m.group(1).replace('.', '')) if val_m else LALIGA_PLAYERS_DB.get(clean_n, {}).get("val", 3000000)
+                        
+                        pts_m = re.search(r'<div class="label">\s*Puntos\s*</div>\s*<div class="value">\s*([\d\.,]+)\s*</div>', pr.text)
+                        pts = int(float(pts_m.group(1).replace(',', '.'))) if pts_m else LALIGA_PLAYERS_DB.get(clean_n, {}).get("pts", 30)
+                        
+                        pos_m = re.search(r'data-position=["\'](\d+)["\']', pr.text)
+                        pos_map = {"1": "POR", "2": "DEF", "3": "MED", "4": "DEL"}
+                        pos_str = pos_map.get(pos_m.group(1), "MED") if pos_m else LALIGA_PLAYERS_DB.get(clean_n, {}).get("pos", "MED")
+                        
+                        is_starter = clean_n in starter_names or (len(squad) < 11 and clean_n not in ["Marc Cucurella", "Mathew Ryan", "Laro Gómez"])
+                        
                         squad.append({
                             "name": clean_n,
-                            "position": meta.get("pos"),
-                            "team": meta.get("team"),
-                            "value": meta.get("val"),
-                            "trend": meta.get("trend", "+20.000€"),
-                            "points": meta.get("pts", 35),
-                            "status": "Titular",
-                            "fitness": meta.get("fitness", "Titular 100%")
+                            "position": pos_str,
+                            "team": "LaLiga",
+                            "value": val,
+                            "trend": "+20.000€",
+                            "points": pts,
+                            "status": "Titular" if is_starter else "Suplente",
+                            "fitness": "Titular 100%" if is_starter else "Banquillo"
                         })
-                        
-            # Extract remaining squad members (Bench / Suplentes)
-            raw_names = re.findall(r'class="name"[^>]*>([^<]+)<', r_team.text)
-            for n in raw_names:
-                clean_n = html.unescape(n.strip())
-                if clean_n and clean_n not in ignore_names and clean_n not in starter_names and "{{" not in clean_n:
-                    starter_names.add(clean_n)
-                    meta = LALIGA_PLAYERS_DB.get(clean_n, {
-                        "pos": "DEF" if "Cucurella" in clean_n else ("POR" if "Ryan" in clean_n else "MED"),
-                        "team": "LaLiga",
-                        "val": 3500000,
-                        "pts": 25,
-                        "trend": "+10.000€",
-                        "fitness": "Suplente"
-                    })
-                    squad.append({
-                        "name": clean_n,
-                        "position": meta.get("pos"),
-                        "team": meta.get("team"),
-                        "value": meta.get("val"),
-                        "trend": meta.get("trend", "+10.000€"),
-                        "points": meta.get("pts", 25),
-                        "status": "Suplente",
-                        "fitness": meta.get("fitness", "Banquillo")
-                    })
+                    except Exception:
+                        pass
     except Exception as e:
         logger.warning(f"Error scraping squad HTML: {e}")
         
